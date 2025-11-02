@@ -41,7 +41,7 @@ public class CardGame {
                 players.add(player);
             }
             
-            // Distribute cards: first 4n cards go to players in round-robin
+            // Distribute cards: first 4n cards go to players in round robin
             int cardIndex = 0;
             for (int round = 0; round < 4; round++) {
                 for (Player player : players) {
@@ -49,7 +49,7 @@ public class CardGame {
                 }
             }
             
-            // Remaining 4n cards go to decks in round-robin
+            // Remaining 4n cards go to decks in round robin
             while (cardIndex < pack.size()) {
                 for (Deck deck : decks) {
                     if (cardIndex < pack.size()) {
