@@ -1,0 +1,165 @@
+ECM2414 Card Game - Submission Guide
+======================================
+
+This guide explains how to create the required submission files:
+1. cards.jar
+2. cardsTest.zip
+
+PREREQUISITES
+-------------
+- Java Development Kit (JDK) 11 or higher
+- Maven 3.6+ (recommended) OR manual compilation tools
+
+OPTION 1: Using Maven (Recommended)
+====================================
+
+Step 1: Build the Project
+--------------------------
+cd /path/to/cards-game
+mvn clean package
+
+This creates:
+- target/cards-1.0.jar (executable JAR)
+- target/cards-1.0-sources.jar (source JAR)
+
+Step 2: Create cards.jar
+-------------------------
+The specification requires both .class and .java files in one JAR.
+Maven's package already does this via maven-source-plugin.
+
+# Method A: Merge the two JARs
+mkdir temp-jar
+cd temp-jar
+jar xf ../target/cards-1.0.jar
+jar xf ../target/cards-1.0-sources.jar
+jar cfm ../cards.jar ../target/classes/META-INF/MANIFEST.MF .
+cd ..
+rm -rf temp-jar
+
+# Method B: Manual approach
+jar cfm cards.jar target/classes/META-INF/MANIFEST.MF \
+    -C target/classes cardgame \
+    -C src/main/java cardgame
+
+Step 3: Verify cards.jar
+-------------------------
+# Check manifest has Main-Class
+jar xf cards.jar META-INF/MANIFEST.MF
+cat META-INF/MANIFEST.MF
+# Should show: Main-Class: cardgame.CardGame
+
+# Check source files included
+jar tf cards.jar | grep "\.java$"
+# Should show: cardgame/Card.java, cardgame/Deck.java, etc.
+
+# Check class files included
+jar tf cards.jar | grep "\.class$"
+# Should show: cardgame/Card.class, cardgame/Deck.class, etc.
+
+# Test it runs
+java -jar cards.jar
+
+Step 4: Create cardsTest.zip
+-----------------------------
+zip -r cardsTest.zip \
+    src/test/ \
+    pom.xml \
+    TEST-README.txt \
+    test_packs/
+
+Step 5: Verify cardsTest.zip
+-----------------------------
+unzip -l cardsTest.zip
+# Should contain:
+# - src/test/java/cardgame/*.java
+# - pom.xml
+# - TEST-README.txt
+# - test_packs/*.txt
+
+OPTION 2: Manual Compilation (Without Maven)
+=============================================
+
+Step 1: Compile Production Code
+--------------------------------
+mkdir -p build/classes
+javac -d build/classes src/main/java/cardgame/*.java
+
+Step 2: Create Manifest
+------------------------
+echo "Main-Class: cardgame.CardGame" > manifest.txt
+echo "" >> manifest.txt
+
+Step 3: Create cards.jar
+-------------------------
+jar cfm cards.jar manifest.txt \
+    -C build/classes cardgame \
+    -C src/main/java cardgame
+
+Step 4: Verify and Test
+------------------------
+jar tf cards.jar
+java -jar cards.jar
+
+Step 5: Create cardsTest.zip
+-----------------------------
+# Create a temporary directory
+mkdir test-submission
+cp -r src/test test-submission/
+cp pom.xml test-submission/
+cp TEST-README.txt test-submission/
+cp -r test_packs test-submission/
+
+# Create zip
+cd test-submission
+zip -r ../cardsTest.zip .
+cd ..
+rm -rf test-submission
+
+FINAL SUBMISSION CHECKLIST
+===========================
+Before submitting, verify:
+
+[✓] cards.jar exists
+[✓] cards.jar contains Main-Class manifest entry
+[✓] cards.jar contains .class files (compiled bytecode)
+[✓] cards.jar contains .java files (source code)
+[✓] java -jar cards.jar runs successfully
+[✓] cardsTest.zip exists
+[✓] cardsTest.zip contains test source files
+[✓] cardsTest.zip contains pom.xml
+[✓] cardsTest.zip contains TEST-README.txt
+[✓] REPORT.md is complete (design ≤2 pages, tests ≤3 pages, log ≤1 page)
+
+WHAT TO SUBMIT TO ELE
+======================
+Create final submission ZIP containing both parts:
+
+mkdir final-submission
+cp cards.jar final-submission/
+cp cardsTest.zip final-submission/
+cp REPORT.md final-submission/
+
+cd final-submission
+zip -r ECM2414-CardGame-Submission.zip cards.jar cardsTest.zip REPORT.md
+cd ..
+
+Upload ECM2414-CardGame-Submission.zip to ELE by the deadline (3rd November 2025, 12:00 noon).
+
+TROUBLESHOOTING
+===============
+
+Problem: "Main class not found"
+Solution: Check manifest with: jar xf cards.jar META-INF/MANIFEST.MF && cat META-INF/MANIFEST.MF
+
+Problem: "Class not found" when running
+Solution: Verify classes are in jar with: jar tf cards.jar | grep "\.class$"
+
+Problem: Maven not installed
+Solution: Use Option 2 (manual compilation) or install Maven with: sudo yum install maven
+
+Problem: Tests won't run
+Solution: Ensure JUnit 5 dependencies in pom.xml, run: mvn clean test
+
+For further help, refer to:
+- Maven documentation: https://maven.apache.org/guides/
+- Java JAR tutorial: https://docs.oracle.com/javase/tutorial/deployment/jar/
