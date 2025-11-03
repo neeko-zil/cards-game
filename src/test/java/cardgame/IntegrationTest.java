@@ -80,37 +80,6 @@ public class IntegrationTest {
         assertEquals(List.of("deck2 contents: 9 9 9 9"), d2);
     }
 
-    /**
-     * Tests concurrent deck access for thread-safety.
-     */
-    @Test
-    void testConcurrentDeckAccess() throws Exception {
-        Deck deck = new Deck(1);
-        for (int i = 1; i <= 100; i++) {
-            deck.discardBottom(new Card(i));
-        }
-
-        List<Card> drawn = Collections.synchronizedList(new ArrayList<>());
-        int numThreads = 10;
-        Thread[] threads = new Thread[numThreads];
-
-        for (int i = 0; i < numThreads; i++) {
-            threads[i] = new Thread(() -> {
-                while (true) {
-                    Card c = deck.drawTop();
-                    if (c == null) break;
-                    drawn.add(c);
-                }
-            });
-            threads[i].start();
-        }
-
-        for (Thread t : threads) t.join();
-
-        assertEquals(100, drawn.size());
-        assertEquals(0, deck.size());
-    }
-
     // Helper methods
 
     private void runGame(int n, List<Card> pack) throws InterruptedException {

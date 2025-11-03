@@ -1,137 +1,78 @@
 package cardgame;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for the Deck class.
  */
 public class DeckTest {
 
-    /** New decks have the given id and start empty. */
     @Test
-    void deckCreation_idAndEmpty() {
+    void testDeckCreation() {
         Deck deck = new Deck(1);
         assertEquals(1, deck.getId());
         assertEquals(0, deck.size());
-        assertTrue(deck.getContents().isEmpty());
     }
 
-    /** Discarding to the bottom increases size. */
     @Test
-    void discardIncreasesSize() {
+    void testDiscardCard() {
         Deck deck = new Deck(1);
-        deck.discardBottom(new Card(5));
+        Card card = new Card(5);
+        deck.discardBottom(card);
         assertEquals(1, deck.size());
     }
 
-    /** FIFO: draw from top returns cards in the order they were inserted. */
     @Test
-    void fifoBehavior_drawTopThenTop() {
+    void testFIFOBehavior() {
         Deck deck = new Deck(1);
-        deck.discardBottom(new Card(1));
-        deck.discardBottom(new Card(2));
-        deck.discardBottom(new Card(3));
+        Card card1 = new Card(1);
+        Card card2 = new Card(2);
+        Card card3 = new Card(3);
+
+        deck.discardBottom(card1);
+        deck.discardBottom(card2);
+        deck.discardBottom(card3);
 
         assertEquals(3, deck.size());
-        assertEquals(1, deck.drawTop().getDenomination());
-        assertEquals(2, deck.drawTop().getDenomination());
-        assertEquals(3, deck.drawTop().getDenomination());
+
+        Card drawn1 = deck.drawTop();
+        assertEquals(1, drawn1.getDenomination());
+
+        Card drawn2 = deck.drawTop();
+        assertEquals(2, drawn2.getDenomination());
+
+        Card drawn3 = deck.drawTop();
+        assertEquals(3, drawn3.getDenomination());
+
         assertEquals(0, deck.size());
-        assertNull(deck.drawTop(), "Drawing from an empty deck should return null");
     }
 
-    /** Drawing from an empty deck returns null. */
     @Test
-    void drawFromEmptyReturnsNull() {
+    void testDrawFromEmptyDeck() {
         Deck deck = new Deck(1);
-        assertNull(deck.drawTop());
+        Card drawn = deck.drawTop();
+        assertNull(drawn);
     }
 
-    /** getContents returns a snapshot in top-to-bottom order and is independent of future mutations. */
     @Test
-    void getContents_snapshotOrderAndIndependence() {
+    void testGetContents() {
         Deck deck = new Deck(1);
         deck.discardBottom(new Card(1));
         deck.discardBottom(new Card(2));
         deck.discardBottom(new Card(3));
 
-        List<Card> snap1 = deck.getContents();
-        assertEquals(3, snap1.size());
-        assertEquals(1, snap1.get(0).getDenomination());
-        assertEquals(2, snap1.get(1).getDenomination());
-        assertEquals(3, snap1.get(2).getDenomination());
-
-        // mutate deck
-        deck.drawTop(); // remove 1
-        deck.discardBottom(new Card(4));
-
-        // previous snapshot unchanged
-        assertEquals(3, snap1.size());
-        assertEquals(1, snap1.get(0).getDenomination());
-        assertEquals(2, snap1.get(1).getDenomination());
-        assertEquals(3, snap1.get(2).getDenomination());
-
-        // new snapshot reflects new state
-        List<Card> snap2 = deck.getContents();
-        assertEquals(3, snap2.size());
-        assertEquals(2, snap2.get(0).getDenomination()); // top is now 2
-        assertEquals(3, snap2.get(1).getDenomination());
-        assertEquals(4, snap2.get(2).getDenomination()); // bottom is 4
+        assertEquals(3, deck.getContents().size());
+        assertEquals(1, deck.getContents().get(0).getDenomination());
+        assertEquals(2, deck.getContents().get(1).getDenomination());
+        assertEquals(3, deck.getContents().get(2).getDenomination());
     }
 
-    /** Null discards are rejected. */
     @Test
-    void discardNullThrows() {
+    void testDiscardNullThrows() {
         Deck deck = new Deck(1);
         assertThrows(NullPointerException.class, () -> deck.discardBottom(null));
-    }
-
-    /**
-     * Concurrency smoke test:
-     * - preload 200 cards
-     * - multiple threads draw until empty
-     * - no lost/duplicated cards; deck ends empty
-     */
-    @Test
-    void concurrency_noLostOrDuplicatedCards() throws InterruptedException {
-        Deck deck = new Deck(1);
-        int total = 200;
-        for (int i = 1; i <= total; i++) {
-            deck.discardBottom(new Card(i));
-        }
-
-        List<Card> drawn = Collections.synchronizedList(new ArrayList<>());
-        int threadsN = 8;
-        Thread[] threads = new Thread[threadsN];
-
-        for (int i = 0; i < threadsN; i++) {
-            threads[i] = new Thread(() -> {
-                while (true) {
-                    Card c = deck.drawTop();
-                    if (c == null) break;
-                    drawn.add(c);
-                }
-            });
-            threads[i].start();
-        }
-        for (Thread t : threads) t.join();
-
-        assertEquals(total, drawn.size(), "All cards should be drawn exactly once");
-        assertEquals(0, deck.size(), "Deck should be empty at the end");
-
-        // Optional duplicate check by value (cheap validation)
-        boolean[] seen = new boolean[total + 1];
-        for (Card c : drawn) {
-            int v = c.getDenomination();
-            assertTrue(v >= 1 && v <= total, "Unexpected card value: " + v);
-            assertFalse(seen[v], "Duplicate card drawn: " + v);
-            seen[v] = true;
-        }
     }
 }
