@@ -32,7 +32,7 @@ public class Player implements Runnable {
     private final Deck rightDeck;
     private final AtomicBoolean gameWon;
     private final List<Player> allPlayers;
-    private final Random random = new Random();
+    private final Random random = new Random(1L);
 
     private BufferedWriter writer;
     private volatile int winnerId = -1; // set by notifyWinner(..)
