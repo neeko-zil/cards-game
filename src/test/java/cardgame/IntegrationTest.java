@@ -1,41 +1,71 @@
 package cardgame;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.AtomicBoolean;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * End-to-end tests that exercise Players + Decks working together and
- * verify on-disk outputs are produced in the required format.
+ * verify on-disk outputs are produced in the required format (exact lines).
  */
 public class IntegrationTest {
 
+    // ---------- helpers ----------
+
+    /** Read all lines from a file (normalizes CRLF/LF by reading line-by-line). */
+    private static List<String> readAllLines(File f) throws Exception {
+        try (BufferedReader br = new BufferedReader(new FileReader(f))) {
+            List<String> out = new ArrayList<>();
+            String line;
+            while ((line = br.readLine()) != null) out.add(line);
+            return out;
+        }
+    }
+
+    /** Make relative file writes (playerX_output.txt / deckX_output.txt) land in a temp folder. */
+    private static void setWorkingDirectory(Path dir) {
+        System.setProperty("user.dir", dir.toAbsolutePath().toString());
+    }
+
+    /** List *.txt files in a dir by name. */
+    private static List<String> listTxtNames(File dir) {
+        String[] arr = dir.list((d, name) -> name.endsWith(".txt"));
+        return arr == null ? List.of() : Arrays.asList(arr);
+    }
+
+    // ---------- tests ----------
+
     /**
-     * Tests immediate win scenario where Player 1 receives four cards of the same value
-     * on the initial deal. Verifies that the game correctly detects the win, stops all
-     * threads, and produces the required output files with proper formatting.
+     * Immediate-win scenario (n=2):
+     * Player 1 is dealt four 1s on the initial deal, so they should win immediately.
+     * We verify exact file contents (line-by-line) and that exactly 2n files are produced.
      */
     @Test
-    void immediateWin_createsFilesAndWinner() throws Exception {
+    void immediateWin_exactOutputs_and_fileCount(@TempDir Path tmp) throws Exception {
+        setWorkingDirectory(tmp);
+
         int n = 2;
-        // Build a pack where Player 1 gets four 1s (instant win)
-        // Cards alternate P1, P2, P1, P2... during round-robin dealing
+
+        // Build a pack where P1 gets four 1s at deal (indices 1,3,5,7 among first 8 cards)
         List<Card> pack = new ArrayList<>();
         Collections.addAll(pack,
-                new Card(1), new Card(2),
-                new Card(1), new Card(3),
-                new Card(1), new Card(4),
-                new Card(1), new Card(5)
+            new Card(1), new Card(2),
+            new Card(1), new Card(3),
+            new Card(1), new Card(4),
+            new Card(1), new Card(5)
         );
-        // Remaining 8 cards go to decks (values arbitrary non-negative)
+        // Remaining 8 cards go into decks (arbitrary non-negative)
         for (int i = 0; i < 8; i++) pack.add(new Card(9));
 
         // --- Wire up game programmatically (bypass CLI) ---
@@ -51,21 +81,19 @@ public class IntegrationTest {
             players.add(p);
         }
 
-        // Deal 4 cards to each player round-robin
+        // Deal 4 cards per player, round-robin
         int idx = 0;
         for (int round = 0; round < 4; round++) {
-            for (Player p : players) {
-                p.addCardToHand(pack.get(idx++));
-            }
+            for (Player p : players) p.addCardToHand(pack.get(idx++));
         }
-        // Remaining cards to decks (bottom) round-robin
+        // Remaining cards to decks, round-robin
         while (idx < pack.size()) {
             for (Deck d : decks) {
                 if (idx < pack.size()) d.discardBottom(pack.get(idx++));
             }
         }
 
-        // Start and join player threads
+        // Start players
         List<Thread> threads = new ArrayList<>();
         for (Player p : players) {
             Thread t = new Thread(p);
@@ -74,67 +102,67 @@ public class IntegrationTest {
         }
         for (Thread t : threads) t.join();
 
-        // --- Assertions ---
-        assertTrue(gameWon.get(), "Game should have been won immediately by player 1");
+        assertTrue(gameWon.get(), "Game should be won immediately by player 1");
 
-        // Verify all output files were created
-        assertTrue(new File("player1_output.txt").exists(), "player1_output.txt should exist");
-        assertTrue(new File("player2_output.txt").exists(), "player2_output.txt should exist");
-        assertTrue(new File("deck1_output.txt").exists(), "deck1_output.txt should exist");
-        assertTrue(new File("deck2_output.txt").exists(), "deck2_output.txt should exist");
+        // Check exactly 2n files exist
+        List<String> names = listTxtNames(tmp.toFile());
+        assertEquals(2 * n, names.size(), "Must produce exactly 2n .txt outputs");
 
-        // Verify winner's output file contains required messages
-        try (BufferedReader br = new BufferedReader(new FileReader("player1_output.txt"))) {
-            String all = br.lines().reduce("", (a, b) -> a + b + "\n");
-            assertTrue(all.contains("player 1 wins"));
-            assertTrue(all.contains("player 1 exits"));
-            // final hand printed with colon per spec
-            assertTrue(all.contains("player 1 final hand:"));
-        }
+        // Exact file contents (line-by-line)
 
-        // Verify non-winner's output file contains required messages
-        try (BufferedReader br = new BufferedReader(new FileReader("player2_output.txt"))) {
-            String all = br.lines().reduce("", (a, b) -> a + b + "\n");
-            assertTrue(all.contains("player 1 has informed player 2 that player 1 has won"));
-            assertTrue(all.contains("player 2 exits"));
-            assertTrue(all.contains("player 2 hand:"));
-        }
+        // player1_output.txt (winner) — exactly 4 lines
+        List<String> p1 = readAllLines(new File(tmp.toFile(), "player1_output.txt"));
+        assertEquals(List.of(
+            "player 1 initial hand 1 1 1 1",
+            "player 1 wins",
+            "player 1 exits",
+            "player 1 final hand: 1 1 1 1"
+        ), p1, "player1_output.txt must match exactly");
+
+        // player2_output.txt (non-winner) — exactly 4 lines
+        List<String> p2 = readAllLines(new File(tmp.toFile(), "player2_output.txt"));
+        assertEquals(List.of(
+            "player 2 initial hand 2 3 4 5",
+            "player 1 has informed player 2 that player 1 has won",
+            "player 2 exits",
+            "player 2 hand: 2 3 4 5"
+        ), p2, "player2_output.txt must match exactly");
+
+        // deck files: one line each, exact wording "deckX contents:"
+        List<String> d1 = readAllLines(new File(tmp.toFile(), "deck1_output.txt"));
+        List<String> d2 = readAllLines(new File(tmp.toFile(), "deck2_output.txt"));
+        assertEquals(List.of("deck1 contents: 9 9 9 9 9 9 9 9"), d1, "deck1_output.txt must match exactly");
+        assertEquals(List.of("deck2 contents: 9 9 9 9 9 9 9 9"), d2, "deck2_output.txt must match exactly");
     }
 
     /**
-     * Tests thread-safe concurrent access to a single deck.
-     * Multiple threads draw cards simultaneously and we verify no cards are lost or duplicated.
+     * Concurrency smoke test on a single deck:
+     * - Preload 100 cards
+     * - 10 threads draw until empty
+     * - Verify no lost/duplicated cards and deck ends empty
      */
     @Test
     void deckConcurrency_noLostCards() throws Exception {
         Deck deck = new Deck(1);
-        
-        // Preload deck with 100 cards
-        for (int i = 1; i <= 100; i++) {
-            deck.discardBottom(new Card(i));
-        }
-        
-        // Create threads that draw from deck
-        int numThreads = 10;
-        Thread[] threads = new Thread[numThreads];
-        List<Card> drawnCards = new ArrayList<>();
-        
-        for (int i = 0; i < numThreads; i++) {
+        for (int i = 1; i <= 100; i++) deck.discardBottom(new Card(i));
+
+        List<Card> drawn = Collections.synchronizedList(new ArrayList<>());
+        int threadsN = 10;
+        Thread[] threads = new Thread[threadsN];
+
+        for (int i = 0; i < threadsN; i++) {
             threads[i] = new Thread(() -> {
-                for (int j = 0; j < 10; j++) {
-                    Card drawn = deck.drawTop();
-                    if (drawn != null) {
-                        synchronized (drawnCards) {
-                            drawnCards.add(drawn);
-                        }
-                    }
+                while (true) {
+                    Card c = deck.drawTop();
+                    if (c == null) break;
+                    drawn.add(c);
                 }
             });
             threads[i].start();
         }
         for (Thread t : threads) t.join();
 
-        assertEquals(100, drawnCards.size(), "All cards should be drawn exactly once");
+        assertEquals(100, drawn.size(), "All cards should be drawn exactly once");
         assertEquals(0, deck.size(), "Deck should be empty at the end");
     }
 }
