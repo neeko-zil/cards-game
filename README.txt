@@ -101,22 +101,6 @@ Error Handling
 
 If the input pack is invalid (wrong number of cards, negative values, or non-integers), the program displays an error message and asks for a new input. It does not crash or start the game until valid input is given.
 
-Report Summary
-
-The accompanying report (maximum 6 pages) explains:
-Design choices for production code (≤2 pages)
-Design choices for tests (≤3 pages)
-Pair programming log (≤1 page, signed by both students)
-
-Authors
-
-Developed by:
-Student A (ID: XXXXXXXX)
-Student B (ID: XXXXXXXX)
-
-Module: ECM2414 – Software Development (2025/26)
-Submission Date: 3 November 2025, 12:00 noon
-
 Notes
 
 The program may produce slightly different action orders between runs because of thread scheduling. This is expected behaviour and does not affect correctness. All output formats follow the wording and layout described in the coursework specification.
