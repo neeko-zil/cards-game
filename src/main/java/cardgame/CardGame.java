@@ -15,16 +15,21 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 /**
- * Main entry point for the multi-threaded card game.
- * - Prompts for inputs (n, pack file)
- * - Validates inputs (does not start until valid)
- * - Distributes cards
- * - Starts player threads
- * - Writes deck outputs on completion
+ Main entry point for the multi-threaded card game.
+
+ * You will need to implement an executable class called CardGame, whose main method
+requests via the command line (terminal window) the number of players in the game (i.e.
+‘n’), and on receiving this, the location of a valid input pack
+
+- Prompts for inputs (n, pack file)
+- Validates inputs (does not start until valid)
+- Distributes cards
+- Starts player threads
+- Writes deck outputs on completion
  */
 public class CardGame {
 
-    // -------------------- MAIN --------------------
+    // ------------------- MAIN --------------
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         try {
@@ -50,16 +55,16 @@ public class CardGame {
             }
 
             // Create n players with ring topology
-            // player i draws from deck i (left) and discards to deck i+1 (right; wrap to 1 after n)
+            // player i draws from deck i (left) and discards to deck i+1
             for (int i = 1; i <= n; i++) {
                 Deck leftDeck = decks.get(i - 1);         // deck i
-                Deck rightDeck = decks.get(i % n);        // deck i+1 (wrap)
+                Deck rightDeck = decks.get(i % n);        // deck i+1
                 Player player = new Player(i, leftDeck, rightDeck, gameWon, players);
                 players.add(player);
             }
 
-            // Distribute cards:
-            // First 4n cards to players in round-robin (4 cards per player)
+            // Distribute cards
+            // First 4n cards to players in round robin (4 cards per player)
             int cardIndex = 0;
             for (int round = 0; round < 4; round++) {
                 for (Player player : players) {
@@ -67,7 +72,7 @@ public class CardGame {
                 }
             }
 
-            // Remaining 4n cards to decks in round-robin order
+            // Remaining 4n cards to decks in round robin order
             while (cardIndex < pack.size()) {
                 for (Deck deck : decks) {
                     if (cardIndex < pack.size()) {
@@ -104,7 +109,7 @@ public class CardGame {
         }
     }
 
-    // -------------------- INPUT PROMPTS --------------------
+    // ------------- INPUT PROMPTS -----------------
 
     // Ask for num players and validate
     private static int promptForNumberOfPlayers(Scanner sc) {
@@ -138,7 +143,7 @@ public class CardGame {
         }
     }
 
-    // ------------------- PACK VALIDATION ---------------
+    // ---------------- PACK VALIDATION -------------
 
     private static final Pattern DIGITS = Pattern.compile("^\\d+$");
 
@@ -226,7 +231,7 @@ public class CardGame {
         List<Integer> values() { return values; }
     }
 
-    // -------------------- HELPERS --------------------
+    // -------------------- HELPERS ------------------
 
     // Writes the final contents of a deck to its output file
     private static void writeDeckOutput(Deck deck) {
