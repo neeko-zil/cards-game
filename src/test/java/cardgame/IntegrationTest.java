@@ -1,17 +1,12 @@
 package cardgame;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import static org.junit.jupiter.api.Assertions.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
 
 /**
  * Integration tests for the complete game system.
@@ -63,13 +58,13 @@ public class IntegrationTest {
             }
         }
         
-        while (cardIndex < pack.size()) {
-            for (Deck deck : decks) {
-                if (cardIndex < pack.size()) {
-                    deck.add(pack.get(cardIndex++));
+            while (cardIndex < pack.size()) {
+                for (Deck deck : decks) {
+                    if (cardIndex < pack.size()) {
+                        deck.discardBottom(pack.get(cardIndex++));
+                    }
                 }
             }
-        }
         
         // Start threads
         List<Thread> threads = new ArrayList<>();
@@ -113,7 +108,7 @@ public class IntegrationTest {
         
         // Add cards to deck
         for (int i = 1; i <= 100; i++) {
-            deck.add(new Card(i));
+            deck.discardBottom(new Card(i));
         }
         
         // Create threads that draw from deck
@@ -124,7 +119,7 @@ public class IntegrationTest {
         for (int i = 0; i < numThreads; i++) {
             threads[i] = new Thread(() -> {
                 for (int j = 0; j < 10; j++) {
-                    Card drawn = deck.draw();
+                    Card drawn = deck.drawTop();
                     if (drawn != null) {
                         synchronized (drawnCards) {
                             drawnCards.add(drawn);

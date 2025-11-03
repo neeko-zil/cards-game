@@ -1,7 +1,8 @@
 package cardgame;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for the Deck class.
@@ -19,7 +20,7 @@ public class DeckTest {
     public void testAddCard() {
         Deck deck = new Deck(1);
         Card card = new Card(5);
-        deck.add(card);
+        deck.discardBottom(card);
         assertEquals(1, deck.size());
     }
     
@@ -30,19 +31,19 @@ public class DeckTest {
         Card card2 = new Card(2);
         Card card3 = new Card(3);
         
-        deck.add(card1);
-        deck.add(card2);
-        deck.add(card3);
+        deck.discardBottom(card1);
+        deck.discardBottom(card2);
+        deck.discardBottom(card3);
         
         assertEquals(3, deck.size());
         
-        Card drawn1 = deck.draw();
+        Card drawn1 = deck.drawTop();
         assertEquals(1, drawn1.getDenomination());
         
-        Card drawn2 = deck.draw();
+        Card drawn2 = deck.drawTop();
         assertEquals(2, drawn2.getDenomination());
         
-        Card drawn3 = deck.draw();
+        Card drawn3 = deck.drawTop();
         assertEquals(3, drawn3.getDenomination());
         
         assertEquals(0, deck.size());
@@ -51,16 +52,16 @@ public class DeckTest {
     @Test
     public void testDrawFromEmptyDeck() {
         Deck deck = new Deck(1);
-        Card drawn = deck.draw();
+        Card drawn = deck.drawTop();
         assertNull(drawn);
     }
     
     @Test
     public void testGetContents() {
         Deck deck = new Deck(1);
-        deck.add(new Card(1));
-        deck.add(new Card(2));
-        deck.add(new Card(3));
+        deck.discardBottom(new Card(1));
+        deck.discardBottom(new Card(2));
+        deck.discardBottom(new Card(3));
         
         assertEquals(3, deck.getContents().size());
         assertEquals(1, deck.getContents().get(0).getDenomination());

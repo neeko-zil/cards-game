@@ -73,7 +73,7 @@ public class CardGame {
             while (cardIndex < pack.size()) {
                 for (Deck deck : decks) {
                     if (cardIndex < pack.size()) {
-                        deck.add(pack.get(cardIndex++));
+                        deck.discardBottom(pack.get(cardIndex++));
                     }
                 }
             }
