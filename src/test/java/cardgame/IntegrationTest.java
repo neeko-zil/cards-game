@@ -3,7 +3,6 @@ package cardgame;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -12,7 +11,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 /**
  * End-to-end tests that exercise Players + Decks working together and
@@ -21,21 +19,15 @@ import org.junit.jupiter.api.io.TempDir;
 public class IntegrationTest {
 
     /**
-     * Immediate-win scenario (n=2):
-     * Player 1 is dealt four 1s on the initial deal, so they should win
-     * immediately. We verify:
-     * - gameWon flag is set
-     * - all player/deck output files exist
-     * - winner file contains the required tail lines
+     * Tests immediate win scenario where Player 1 receives four cards of the same value
+     * on the initial deal. Verifies that the game correctly detects the win, stops all
+     * threads, and produces the required output files with proper formatting.
      */
     @Test
-    void immediateWin_createsFilesAndWinner(@TempDir Path tmp) throws Exception {
-        // Make relative file writes (playerX_output.txt / deckX_output.txt) land in a temp folder
-        setWorkingDirectory(tmp);
-
+    void immediateWin_createsFilesAndWinner() throws Exception {
         int n = 2;
-        // Build a pack: first 8 cards (hands) alternate P1,P2,P1,P2,...
-        // P1 receives indices 1,3,5,7 -> four 1s (instant win)
+        // Build a pack where Player 1 gets four 1s (instant win)
+        // Cards alternate P1, P2, P1, P2... during round-robin dealing
         List<Card> pack = new ArrayList<>();
         Collections.addAll(pack,
                 new Card(1), new Card(2),
@@ -85,13 +77,13 @@ public class IntegrationTest {
         // --- Assertions ---
         assertTrue(gameWon.get(), "Game should have been won immediately by player 1");
 
-        // Files exist (written to current directory, not tmp - FileWriter doesn't respect user.dir)
+        // Verify all output files were created
         assertTrue(new File("player1_output.txt").exists(), "player1_output.txt should exist");
         assertTrue(new File("player2_output.txt").exists(), "player2_output.txt should exist");
         assertTrue(new File("deck1_output.txt").exists(), "deck1_output.txt should exist");
         assertTrue(new File("deck2_output.txt").exists(), "deck2_output.txt should exist");
 
-        // Winner tail lines present in player1_output.txt
+        // Verify winner's output file contains required messages
         try (BufferedReader br = new BufferedReader(new FileReader("player1_output.txt"))) {
             String all = br.lines().reduce("", (a, b) -> a + b + "\n");
             assertTrue(all.contains("player 1 wins"));
@@ -100,7 +92,7 @@ public class IntegrationTest {
             assertTrue(all.contains("player 1 final hand:"));
         }
 
-        // Non-winner tail lines present in player2_output.txt
+        // Verify non-winner's output file contains required messages
         try (BufferedReader br = new BufferedReader(new FileReader("player2_output.txt"))) {
             String all = br.lines().reduce("", (a, b) -> a + b + "\n");
             assertTrue(all.contains("player 1 has informed player 2 that player 1 has won"));
@@ -110,16 +102,14 @@ public class IntegrationTest {
     }
 
     /**
-     * Concurrency smoke test on a single deck:
-     * - Preload 100 cards
-     * - 10 threads draw until empty
-     * - Verify no lost/duplicated cards and deck ends empty
+     * Tests thread-safe concurrent access to a single deck.
+     * Multiple threads draw cards simultaneously and we verify no cards are lost or duplicated.
      */
     @Test
     void deckConcurrency_noLostCards() throws Exception {
         Deck deck = new Deck(1);
         
-        // Add cards to deck
+        // Preload deck with 100 cards
         for (int i = 1; i <= 100; i++) {
             deck.discardBottom(new Card(i));
         }
@@ -146,15 +136,5 @@ public class IntegrationTest {
 
         assertEquals(100, drawnCards.size(), "All cards should be drawn exactly once");
         assertEquals(0, deck.size(), "Deck should be empty at the end");
-    }
-
-    // ----------------- helpers -----------------
-
-    /**
-     * Tests rely on Card/Player writing relative paths (playerX_output.txt, deckX_output.txt).
-     * This method makes those paths land in a dedicated temp directory to avoid polluting the project.
-     */
-    private static void setWorkingDirectory(Path dir) {
-        System.setProperty("user.dir", dir.toAbsolutePath().toString());
     }
 }
