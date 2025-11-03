@@ -17,6 +17,54 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class CardGame {
     
     public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        int n;
+        List<Integer> pack;
+        Path packPath;
+
+        // 1️⃣ prompt for n
+        while (true) {
+            System.out.println("Please enter the number of players:");
+            String s = sc.nextLine().trim();
+            try {
+                n = Integer.parseInt(s);
+                if (n >= 1) break;
+                System.out.println("Error: number of players must be a positive integer (>=1).");
+            } catch (NumberFormatException e) {
+                System.out.println("Error: please enter a valid integer for number of players.");
+            }
+        }
+
+        // 2️⃣ prompt for pack file
+        while (true) {
+            System.out.println("Please enter the location of the pack file:");
+            String p = sc.nextLine().trim();
+            packPath = Paths.get(p);
+            ValidationResult vr = validatePack(packPath, n);
+            if (vr.ok()) {
+                pack = vr.values();
+                break;
+            }
+            System.out.println("Invalid pack: " + vr.message());
+        }
+
+        // 3️⃣ if we got here, both inputs are valid — continue setup
+        System.out.println("Starting game with " + n + " players...");
+        // TODO: deal cards, create decks, start threads, etc.
+    }
+
+    // 4️⃣ validator helper method
+    static final Pattern DIGITS = Pattern.compile("^\\d+$");
+
+    static ValidationResult validatePack(Path path, int n) {
+        // (Insert the detailed validatePack() method from the earlier message here)
+    }
+
+    static final class ValidationResult {
+        // (Insert the nested ValidationResult class here)
+    }
+}
         BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in));
         
         try {
