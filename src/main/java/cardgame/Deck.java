@@ -8,15 +8,15 @@ import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Thread-safe FIFO deck of cards.
- * <p>
- * Contract:
- * - Draw from the TOP (front) of the deck.
- * - Discard to the BOTTOM (back) of the deck.
- * - Methods are protected by an internal lock.
- * - For operations that span TWO decks (atomic draw+discard), the Player class
- *   is responsible for acquiring both deck locks in a consistent global order
- *   (e.g., lower-id first) to avoid deadlocks.
+A deck of cards that works with multiple threads.
+
+A deck is an ordered, thread-safe container (FIFO) holding card
+denominations from the shared 8n pack. Players draw from the top (front) and discard
+to the bottom (back) of decks as specified by the ring topology (player i draws from deck i
+and discards to deck i+1). Draw and discard together are treated as one atomic action. At
+game end, each player holds exactly four cards, and each deck’s final contents are
+written to deckX_output.txt (deck sizes may vary)
+
  */
 public class Deck {
 
@@ -28,14 +28,14 @@ public class Deck {
         this.id = id;
     }
 
-    /** Deck identifier (1..n). */
+    // Deck identifier (1 to n).
     public int getId() {
         return id;
     }
 
     /**
-     * Draws a card from the TOP (front) of the deck.
-     * @return the card drawn, or null if the deck is empty.
+     * Draws a card from the top of the deck.
+     * Return the card drawn, or null if the deck is empty.
      */
     public Card drawTop() {
         lock.lock();
@@ -46,10 +46,7 @@ public class Deck {
         }
     }
 
-    /**
-     * Discards a card to the BOTTOM (back) of the deck.
-     * @param card non-null card to add
-     */
+    //Discards a card to the bottom of the deck.
     public void discardBottom(Card card) {
         Objects.requireNonNull(card, "card");
         lock.lock();
@@ -60,10 +57,7 @@ public class Deck {
         }
     }
 
-    /**
-     * Returns a snapshot of the deck contents from TOP to BOTTOM.
-     * Used for writing deckX_output.txt.
-     */
+    // Return all cards in deck
     public List<Card> getContents() {
         lock.lock();
         try {
@@ -73,7 +67,7 @@ public class Deck {
         }
     }
 
-    /** Current number of cards in the deck. */
+    // Current number of cards in the deck
     public int size() {
         lock.lock();
         try {
@@ -83,15 +77,7 @@ public class Deck {
         }
     }
 
-    /**
-     * Exposes the lock to callers that need to coordinate atomic
-     * cross-deck operations (e.g., Player performing draw+discard).
-     * <p>
-     * NOTE: Callers MUST follow a global lock ordering (such as locking
-     * the lower-id deck first) to prevent deadlocks.
-     */
     public ReentrantLock getLock() {
         return lock;
     }
 }
-
