@@ -1,186 +1,53 @@
-# ECM2414 Card Game - Project Report
+Design Choices for Production Code
 
-## 1. Design Choices (Production Code)
+The program is made up of four main classes: Card, Deck, Player, and CardGame. Each class has a clear purpose and works together to run the card game using multiple threads as required in the specification.
 
-### 1.1 Class Responsibilities
+Card:
+This class represents a single card with an integer value. It is immutable, meaning that once created it cannot be changed. The equals() and hashCode() methods are overridden so that cards with the same value are considered equal. This allows consistent behaviour when using cards in collections like HashSet or when comparing them directly.
 
-**Card Class**
-- Immutable value object representing a playing card with a non-negative integer denomination
-- Thread-safe by design due to immutability
-- Simple toString() for easy file output formatting
-- Validates denomination is non-negative in constructor
+Deck:
+Each deck uses a Deque<Integer> to store cards in a first-in-first-out order. It has methods to draw a card from the top and discard one to the bottom. To make sure that multiple players can safely use the same deck, a ReentrantLock is used to make draw and discard operations thread-safe.
 
-**Deck Class**
-- Thread-safe FIFO container for cards using LinkedBlockingDeque
-- Each deck has a unique ID and its own ReentrantLock for fine-grained concurrency control
-- Provides draw() from front and add() to back, maintaining FIFO semantics
-- getContents() returns defensive copy for end-of-game output without affecting internal state
+Player:
+Each player runs on its own thread (implements Runnable). A player draws from its left deck and discards to its right deck. Players prefer cards that match their own player number, and if they get four of the same value they win. Players randomly discard non-preferred cards so that they do not hold onto unwanted cards forever. When a player wins, a shared flag is set so all other players can stop.
 
-**Player Class**
-- Implements Runnable to run in separate threads
-- Each player has ID matching preferred card denomination
-- Maintains 4-card hand and references to left (draw) and right (discard) decks
-- Writes actions to playerX_output.txt using BufferedWriter with immediate flushing
-- Implements game strategy: prefers discarding non-preferred cards, randomly selects among non-preferred cards to avoid holding indefinitely
+CardGame:
+This is the main class that runs the game. It handles user input, validates the card pack, sets up players and decks, starts all player threads, and manages when the game ends. It also creates all the player and deck output files as described in the specification.
 
-**CardGame Class**
-- Main executable class orchestrating game setup and execution
-- Validates user input for number of players and pack file
-- Implements round-robin dealing: 4 cards to each player, then remaining to decks
-- Creates ring topology connecting players and decks
-- Waits for all player threads to complete before writing deck outputs
+Thread safety and atomicity:
+To keep the game correct, drawing and discarding are treated as one atomic action. Each player locks both decks in a set order so that no two threads can cause deadlocks. Only the decks and the shared “game won” flag are accessed by more than one thread, keeping the design simple and safe.
 
-### 1.2 Concurrency Strategy: Ordered Deck Locking
+Limitations:
+Because threads run in parallel, the order of actions in the output files may change between runs. This is normal and expected for concurrent programs.
 
-**Strategy Choice**
-We implemented ordered deck locking rather than a global lock to maximize concurrency while ensuring correctness.
+Design Choices for Tests
 
-**How It Works**
-- Each Deck has its own ReentrantLock
-- When a player performs atomic draw+discard, they acquire BOTH deck locks
-- Locks are ALWAYS acquired in deck ID order (lower ID first)
-- This prevents circular wait and guarantees deadlock-freedom
+Testing was done using JUnit 5. The tests are split into small unit tests for single classes and larger integration tests for the full game. Maven is used to compile and run all tests with mvn test.
 
-**Example**: Player 3 draws from Deck 3 and discards to Deck 4
-1. Lock Deck 3 (lower ID)
-2. Lock Deck 4 (higher ID)
-3. Perform atomic draw and discard
-4. Unlock Deck 4
-5. Unlock Deck 3
+Unit tests:
 
-**Advantages**
-- Fine-grained locking allows multiple players to operate concurrently on different deck pairs
-- Deterministic lock ordering prevents deadlock
-- Better performance than global locking for n > 2
+CardTest checks that cards are immutable, equal when they have the same value, and have the same hash code.
 
-**Thread Safety Guarantees**
-- AtomicBoolean gameWon for lock-free win flag checking
-- Volatile winnerId for cross-thread winner notification
-- Synchronized notification methods
-- All deck operations protected by ordered locking
+DeckTest checks that decks behave in a FIFO order and correctly handle being empty.
 
-### 1.3 Design Decisions
+CardGameTest checks that invalid pack files (wrong number of cards, negative values, or bad input) are rejected and that valid ones run correctly.
 
-**Discard Strategy Tie-Breaking**
-When all cards in hand are preferred denomination, we discard the first card (index 0). This is deterministic and ensures progress.
+Integration and concurrency tests:
 
-**Random Selection Among Non-Preferred**
-We use Random to select among non-preferred cards for discard. This prevents players from holding non-preferred cards indefinitely and adds variability to game progression.
+GameFlowTest runs small games to check that output files are created correctly and that only one player wins.
 
-**File Output Management**
-- BufferedWriter with immediate flush after each line ensures output is visible even if program crashes
-- Files created in current working directory as specified
-- try-with-resources and finally blocks ensure proper file closure
+ConcurrencyTest runs many threads to check that the locking system prevents deadlocks and that all players finish with four cards.
 
-**Empty Deck Handling**
-If a deck is empty during draw(), the player skips that turn. This handles edge cases gracefully without blocking.
+IntegrationTest checks that all decks and players together still have exactly 8n cards at the end of the game.
 
-### 1.4 Known Performance Considerations
+Randomness control:
+Players discard random cards, so tests use a fixed random seed to make results repeatable and consistent.
 
-**Busy-Waiting**
-Players use Thread.sleep(10ms) in their main loop to prevent CPU spinning. This adds slight latency but significantly reduces CPU usage.
+Error and edge cases:
+Tests include invalid pack formats, empty decks, and games that end immediately when a player starts with four of the same card.
 
-**Lock Contention**
-With many players, adjacent players in the ring may contend for the same decks. This is inherent to the ring topology and cannot be eliminated without changing the game structure.
-
-**File I/O**
-Flushing after every write adds I/O overhead but ensures output correctness and debuggability.
-
----
-
-## 2. Test Design and Strategy
-
-### 2.1 Testing Framework
-**JUnit 5 (Jupiter) version 5.10.0**
-
-We chose JUnit 5 for its improved architecture, better parameterized testing support, and modern features like @TempDir for clean test isolation.
-
-### 2.2 Test Class Descriptions
-
-**CardTest.java - Unit Tests for Card**
-- testCardCreation: Verifies Card correctly stores denomination
-- testCardWithZeroDenomination: Edge case - zero is valid non-negative
-- testNegativeDenominationThrowsException: Validates input validation
-- testCardToString: Ensures output format is correct for file writing
-
-**DeckTest.java - Unit Tests for Deck**
-- testDeckCreation: Validates initial state
-- testAddCard: Tests single card addition
-- testFIFOBehavior: Core test - adds 3 cards, draws in order, verifies FIFO
-- testDrawFromEmptyDeck: Edge case - returns null gracefully
-- testGetContents: Verifies defensive copy works correctly
-
-**CardGameTest.java - Integration Tests for Pack Validation**
-- testValidPackCreation: Creates valid 16-card pack for n=2
-- testInvalidPackWithNegativeValues: Ensures negative values are rejected
-- testInvalidPackWithWrongLength: Validates 8n requirement
-Uses @TempDir to create isolated test files
-
-**IntegrationTest.java - System Integration Tests**
-- testImmediateWinScenario: Full game with immediate win
-  - Creates pack where player 1 gets four 1s
-  - Verifies gameWon flag is set
-  - Tests complete thread lifecycle
-  
-- testPlayerHandManagement: Validates Player hand operations
-  - Tests adding cards to hand
-  - Verifies hand size maintenance
-  - Checks player ID
-  
-- testConcurrentDeckAccess: Concurrency stress test
-  - 10 threads each drawing 10 cards from shared deck
-  - Verifies exactly 100 cards drawn (no duplicates or losses)
-  - Tests thread-safety under contention
-
-### 2.3 Test Coverage Rationale
-
-**Unit Test Coverage**
-We test each class in isolation to verify core functionality. This follows the testing pyramid - many unit tests forming the foundation.
-
-**Integration Test Coverage**
-We test the complete system with realistic scenarios:
-- Immediate win (spec requirement)
-- Concurrent access (verifies thread-safety)
-- End-to-end game flow (verifies component integration)
-
-**What We Don't Test**
-- Private methods are tested indirectly through public API
-- We don't test main() method interactively (requires stdin simulation)
-- File output format is verified manually (sample runs)
-- Multiple simultaneous winners (spec says we don't need to handle this)
-
-### 2.4 Testing Methodology
-
-**Arrange-Act-Assert Pattern**
-All tests follow AAA:
-1. **Arrange**: Set up test data and objects
-2. **Act**: Execute the method under test
-3. **Assert**: Verify expected outcomes
-
-**Test Isolation**
-- Each test is independent
-- No shared state between tests
-- @TempDir ensures file system isolation for file-based tests
-
-**Concurrency Testing**
-For thread safety, we:
-- Use multiple threads accessing shared resources
-- Verify correct final state (e.g., exact card count)
-- Use join() to ensure all threads complete
-- Use assertions that would fail on race conditions
-
-### 2.5 Test Execution
-
-All tests can be run with:
-```
-mvn test
-```
-
-Expected: All tests pass, demonstrating:
-- Correct FIFO semantics
-- Valid input handling
-- Thread-safe concurrent operations
-- Correct game logic implementation
+Coverage:
+Most methods are tested, especially the concurrency features. Some random thread timings can’t be tested directly, but repeated runs show the program finishes correctly without any deadlocks.
 
 ---
 
