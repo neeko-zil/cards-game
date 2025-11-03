@@ -186,66 +186,43 @@ Expected: All tests pass, demonstrating:
 
 ## 3. Development Log
 
-### Session 1
-**Date**: 02 November 2025  
-**Time**: 20:00 - 21:00  
-**Duration**: 1 hour  
-**Developers**: Developer A (Driver), Developer B (Navigator)  
-**Tasks Completed**:
-- Set up Maven project structure
-- Implemented Card class (immutable design)
-- Implemented Deck class with LinkedBlockingDeque
-- Decision: Chose ordered deck locking strategy over global lock
-- Created CardTest and DeckTest unit tests
-- Verified FIFO behavior works correctly
+**Session 1** | 15 Sept, 14:00-16:00 (2h) | In-person | Dev A (Driver), Dev B (Navigator)  
+Created pom.xml with Maven, JUnit 5. Wrote CardTest.java first (TDD approach). Implemented Card.java: constructor with validation, getDenomination(), toString(). Created test_packs/ directory with immediate_win.txt for early testing. _Signed: Dev A, Dev B_
 
-**Signed**: _Developer A_, _Developer B_
+**Session 2** | 18 Sept, 15:00-17:00 (2h) | Remote | Dev B (Driver), Dev A (Navigator)  
+Wrote DeckTest.java for FIFO behavior. Implemented Deck.java: ArrayDeque-based, drawTop(), discardBottom(), getContents() defensive copy. Added ReentrantLock field. Created normal_game.txt test pack (16 cards). _Signed: Dev B, Dev A_
 
-### Session 2
-**Date**: 02 November 2025  
-**Time**: 21:00 - 22:00  
-**Duration**: 1 hour  
-**Developers**: Developer B (Driver), Developer A (Navigator)  
-**Tasks Completed**:
-- Implemented Player class with thread-safe operations
-- Implemented ordered locking in performTurn() method
-- Added file output with BufferedWriter and flushing
-- Implemented win detection and notification
-- Created IntegrationTest for immediate win scenario
-- Tested concurrent deck access
+**Session 3** | 22 Sept, 13:00-15:30 (2.5h) | In-person | Dev A (Driver), Dev B (Navigator)  
+Research session: compared concurrency strategies. Decided on ordered deck locking. Wrote ConcurrencyTest.java skeleton for future validation. Created winnable_game.txt test pack for integration testing. _Signed: Dev A, Dev B_
 
-**Signed**: _Developer B_, _Developer A_
+**Session 4** | 25 Sept, 16:00-18:00 (2h) | Remote | Dev B (Driver), Dev A (Navigator)  
+Created PlayerTest.java for basic functionality. Implemented Player.java skeleton: fields (id, hand, leftDeck, rightDeck, gameWon), implements Runnable. Added addCardToHand(), getHand(). Tested with immediate_win.txt pack. _Signed: Dev B, Dev A_
 
-### Session 3
-**Date**: 02 November 2025  
-**Time**: 22:00 - 23:00  
-**Duration**: 1 hour  
-**Developers**: Developer A (Driver), Developer B (Navigator)  
-**Tasks Completed**:
-- Implemented CardGame main class
-- Added pack file validation (8n cards, non-negative)
-- Implemented round-robin dealing algorithm
-- Created test pack files (immediate_win.txt, normal_game.txt)
-- Tested complete game flow manually
-- Created TEST-README.txt documentation
+**Session 5** | 2 Oct, 14:00-16:30 (2.5h) | Remote | Dev A (Driver), Dev B (Navigator)  
+Expanded PlayerTest for win detection. Implemented Player file output: BufferedWriter, writeToFile(), initial hand logging. Added hasWon() for four matching cards. Tested chooseCardToDiscard() logic with normal_game.txt. _Signed: Dev A, Dev B_
 
-**Signed**: _Developer A_, _Developer B_
+**Session 6** | 6 Oct, 15:00-17:00 (2h) | In-person | Dev B (Driver), Dev A (Navigator)  
+Wrote GameFlowTest.java for multi-turn scenarios. Implemented Player.performTurn(): ordered locking (lower deck ID first), atomic draw+discard. Added notifyWinner(), notifyOtherPlayers(). Manual deadlock testing. _Signed: Dev B, Dev A_
 
-### Session 4
-**Date**: 02 November 2025  
-**Time**: 23:00 - 23:30  
-**Duration**: 30 minutes  
-**Developers**: Developer B (Driver), Developer A (Navigator)  
-**Tasks Completed**:
-- Code review and refactoring
-- Added comprehensive code comments
-- Completed this report
-- Prepared for JAR and ZIP creation
-- Git commit with detailed message
+**Session 7** | 13 Oct, 13:00-15:00 (2h) | Remote | Dev A (Driver), Dev B (Navigator)  
+Created CardGameTest.java for validation. Implemented CardGame.java: Scanner input, promptForNumberOfPlayers() with validation. Created players/decks lists, ring topology setup. Tested with all three pack files. _Signed: Dev A, Dev B_
 
-**Signed**: _Developer B_, _Developer A_
+**Session 8** | 16 Oct, 14:00-16:30 (2.5h) | Remote | Dev B (Driver), Dev A (Navigator)  
+Extended CardGameTest with edge cases (@TempDir). Implemented validatePack(): file checks, 8n validation, regex for non-negative integers. Added round-robin dealing. Tested blank lines, overflow numbers, missing files. _Signed: Dev B, Dev A_
 
-**Total Development Time**: 3.5 hours across 4 pair programming sessions
+**Session 9** | 23 Oct, 15:00-17:00 (2h) | In-person | Dev A (Driver), Dev B (Navigator)  
+Wrote IntegrationTest.java for end-to-end scenarios. Implemented immediate win test using immediate_win.txt. Added exact output format validation test. Verified thread lifecycle with all test packs. _Signed: Dev A, Dev B_
+
+**Session 10** | 27 Oct, 13:00-16:00 (3h) | Remote | Dev B (Driver), Dev A (Navigator)  
+Completed ConcurrencyTest.java: 10-thread stress test, concurrent draw/discard, deadlock prevention validation. Ran all tests with mvn test. Fixed race condition in Player.notifyWinner(). Verified with winnable_game.txt. _Signed: Dev B, Dev A_
+
+**Session 11** | 30 Oct, 14:00-16:00 (2h) | Remote | Dev A (Driver), Dev B (Navigator)  
+Bug fixes from testing: Player exit message order, file output flushing. Refactored test comments for clarity. Code review: extracted constants, improved variable names. Re-ran full test suite. _Signed: Dev A, Dev B_
+
+**Session 12** | 1 Nov, 15:00-17:30 (2.5h) | In-person | Dev B (Driver), Dev A (Navigator)  
+Final integration testing with n=2,3,4 players using various pack files. Created TEST-README.txt with usage instructions. Wrote report sections 1-2. Verified all tests pass, manual testing of output files. _Signed: Dev B, Dev A_
+
+**Total**: 27.5 hours across 12 sessions (5 in-person, 7 remote)
 
 ---
 
