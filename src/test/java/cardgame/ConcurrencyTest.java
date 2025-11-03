@@ -10,33 +10,30 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests for concurrent/multi-threaded operations.
- * Verifies thread-safety of Deck and game components under concurrent access.
+ * Tests for thread-safety - verifies concurrent operations work correctly.
  */
 public class ConcurrencyTest {
 
     /**
-     * Tests that multiple threads can safely draw from the same deck
-     * without losing or duplicating cards.
+     * Test that 10 threads can draw from one deck without losing cards.
+     * Verifies all 100 cards are drawn and deck ends empty.
      */
     @Test
-    void testConcurrentDeckDrawing_NoLostCards() throws InterruptedException {
+    void concurrentDrawing() throws InterruptedException {
         Deck deck = new Deck(1);
         
-        // Preload deck with 100 cards
+        // Add 100 cards
         for (int i = 1; i <= 100; i++) {
             deck.discardBottom(new Card(i));
         }
         
-        // 10 threads each drawing 10 cards
-        int numThreads = 10;
-        int cardsPerThread = 10;
-        Thread[] threads = new Thread[numThreads];
+        // 10 threads each draw 10 cards
+        Thread[] threads = new Thread[10];
         List<Card> drawnCards = new ArrayList<>();
         
-        for (int i = 0; i < numThreads; i++) {
+        for (int i = 0; i < 10; i++) {
             threads[i] = new Thread(() -> {
-                for (int j = 0; j < cardsPerThread; j++) {
+                for (int j = 0; j < 10; j++) {
                     Card drawn = deck.drawTop();
                     if (drawn != null) {
                         synchronized (drawnCards) {
@@ -48,61 +45,54 @@ public class ConcurrencyTest {
             threads[i].start();
         }
         
-        // Wait for all threads to complete
-        for (Thread t : threads) {
-            t.join();
-        }
+        for (Thread t : threads) t.join();
 
-        // Verify exactly 100 cards were drawn (no duplicates or losses)
-        assertEquals(100, drawnCards.size(), "Exactly 100 cards should be drawn");
-        assertEquals(0, deck.size(), "Deck should be empty");
+        // Verify all cards drawn
+        assertEquals(100, drawnCards.size());
+        assertEquals(0, deck.size());
     }
 
     /**
-     * Tests concurrent discard operations to ensure thread-safety.
+     * Test that 10 threads can add cards to one deck safely.
+     * Verifies all 100 cards are added.
      */
     @Test
-    void testConcurrentDeckDiscarding_AllCardsAdded() throws InterruptedException {
+    void concurrentDiscarding() throws InterruptedException {
         Deck deck = new Deck(1);
         
-        int numThreads = 10;
-        int cardsPerThread = 10;
-        Thread[] threads = new Thread[numThreads];
+        // 10 threads each add 10 cards
+        Thread[] threads = new Thread[10];
         
-        // Each thread adds 10 cards
-        for (int i = 0; i < numThreads; i++) {
+        for (int i = 0; i < 10; i++) {
             final int threadId = i;
             threads[i] = new Thread(() -> {
-                for (int j = 0; j < cardsPerThread; j++) {
+                for (int j = 0; j < 10; j++) {
                     deck.discardBottom(new Card(threadId * 100 + j));
                 }
             });
             threads[i].start();
         }
         
-        for (Thread t : threads) {
-            t.join();
-        }
+        for (Thread t : threads) t.join();
 
-        // Verify all 100 cards were added
-        assertEquals(100, deck.size(), "All cards should be in deck");
+        // Verify all cards added
+        assertEquals(100, deck.size());
     }
 
     /**
-     * Tests that AtomicBoolean gameWon flag works correctly under concurrent access.
+     * Test that only one thread can win when many try at once.
+     * Verifies AtomicBoolean compareAndSet works correctly.
      */
     @Test
-    void testConcurrentWinDetection_OnlyOneWinner() throws InterruptedException {
+    void oneWinnerOnly() throws InterruptedException {
         AtomicBoolean gameWon = new AtomicBoolean(false);
         AtomicInteger winnerCount = new AtomicInteger(0);
         
-        int numThreads = 10;
-        Thread[] threads = new Thread[numThreads];
+        // 10 threads try to win
+        Thread[] threads = new Thread[10];
         
-        // Simulate multiple threads trying to set win flag
-        for (int i = 0; i < numThreads; i++) {
+        for (int i = 0; i < 10; i++) {
             threads[i] = new Thread(() -> {
-                // Only one thread should successfully set gameWon from false to true
                 if (gameWon.compareAndSet(false, true)) {
                     winnerCount.incrementAndGet();
                 }
@@ -110,34 +100,31 @@ public class ConcurrencyTest {
             threads[i].start();
         }
         
-        for (Thread t : threads) {
-            t.join();
-        }
+        for (Thread t : threads) t.join();
 
-        // Only one thread should have won
-        assertEquals(1, winnerCount.get(), "Only one thread should successfully set gameWon");
-        assertTrue(gameWon.get(), "gameWon should be true");
+        // Only one should succeed
+        assertEquals(1, winnerCount.get());
+        assertTrue(gameWon.get());
     }
 
     /**
-     * Tests concurrent access to deck's getContents() method.
-     * Verifies defensive copy works correctly under concurrent access.
+     * Test that getContents() is thread-safe.
+     * Verifies concurrent calls return correct snapshots.
      */
     @Test
-    void testConcurrentGetContents_DefensiveCopy() throws InterruptedException {
+    void getContentsThreadSafe() throws InterruptedException {
         Deck deck = new Deck(1);
         
-        // Add some cards
+        // Add 50 cards
         for (int i = 1; i <= 50; i++) {
             deck.discardBottom(new Card(i));
         }
         
-        int numThreads = 5;
-        Thread[] threads = new Thread[numThreads];
+        // 5 threads get snapshots at same time
+        Thread[] threads = new Thread[5];
         List<List<Card>> snapshots = new ArrayList<>();
         
-        // Multiple threads get snapshots simultaneously
-        for (int i = 0; i < numThreads; i++) {
+        for (int i = 0; i < 5; i++) {
             threads[i] = new Thread(() -> {
                 List<Card> snapshot = deck.getContents();
                 synchronized (snapshots) {
@@ -147,23 +134,21 @@ public class ConcurrencyTest {
             threads[i].start();
         }
         
-        for (Thread t : threads) {
-            t.join();
-        }
+        for (Thread t : threads) t.join();
 
-        // All snapshots should have same size
-        assertEquals(numThreads, snapshots.size());
+        // All snapshots should have 50 cards
+        assertEquals(5, snapshots.size());
         for (List<Card> snapshot : snapshots) {
-            assertEquals(50, snapshot.size(), "Each snapshot should have 50 cards");
+            assertEquals(50, snapshot.size());
         }
     }
 
     /**
-     * Tests ordered deck locking to prevent deadlock.
-     * Simulates the scenario where multiple players access deck pairs.
+     * Test ordered locking prevents deadlock.
+     * Both threads lock decks in same order (deck1 then deck2).
      */
     @Test
-    void testOrderedDeckLocking_NoDeadlock() throws InterruptedException {
+    void orderedLockingNoDeadlock() throws InterruptedException {
         Deck deck1 = new Deck(1);
         Deck deck2 = new Deck(2);
         
@@ -172,19 +157,15 @@ public class ConcurrencyTest {
             deck1.discardBottom(new Card(i));
         }
         
-        // Simulate Player behavior: always lock in order (lower ID first)
-        int numOperations = 100;
+        // Both threads lock in same order: deck1 first, then deck2
         Thread thread1 = new Thread(() -> {
-            for (int i = 0; i < numOperations; i++) {
-                // Lock deck1 first (lower ID), then deck2
+            for (int i = 0; i < 100; i++) {
                 deck1.getLock().lock();
                 try {
                     deck2.getLock().lock();
                     try {
                         Card c = deck1.drawTop();
-                        if (c != null) {
-                            deck2.discardBottom(c);
-                        }
+                        if (c != null) deck2.discardBottom(c);
                     } finally {
                         deck2.getLock().unlock();
                     }
@@ -195,16 +176,13 @@ public class ConcurrencyTest {
         });
         
         Thread thread2 = new Thread(() -> {
-            for (int i = 0; i < numOperations; i++) {
-                // Also lock deck1 first (maintaining order)
+            for (int i = 0; i < 100; i++) {
                 deck1.getLock().lock();
                 try {
                     deck2.getLock().lock();
                     try {
                         Card c = deck1.drawTop();
-                        if (c != null) {
-                            deck2.discardBottom(c);
-                        }
+                        if (c != null) deck2.discardBottom(c);
                     } finally {
                         deck2.getLock().unlock();
                     }
@@ -217,32 +195,31 @@ public class ConcurrencyTest {
         thread1.start();
         thread2.start();
         
-        // If there's a deadlock, this will hang
-        thread1.join(5000); // 5 second timeout
+        // If deadlock occurs, these will timeout
+        thread1.join(5000);
         thread2.join(5000);
         
-        // If we got here, no deadlock occurred
-        assertTrue(true, "No deadlock occurred with ordered locking");
+        assertTrue(true); // No deadlock
     }
 
     /**
-     * Stress test with many threads accessing decks simultaneously.
+     * Stress test with many threads.
+     * 50 threads draw 500 cards total from one deck.
      */
     @Test
-    void testHighConcurrency_ManyThreads() throws InterruptedException {
+    void manyThreadsStressTest() throws InterruptedException {
         Deck deck = new Deck(1);
         
-        // Preload 500 cards
+        // Add 500 cards
         for (int i = 1; i <= 500; i++) {
             deck.discardBottom(new Card(i));
         }
         
-        // 50 threads each drawing 10 cards
-        int numThreads = 50;
-        Thread[] threads = new Thread[numThreads];
+        // 50 threads each draw 10 cards
+        Thread[] threads = new Thread[50];
         AtomicInteger cardsDrawn = new AtomicInteger(0);
         
-        for (int i = 0; i < numThreads; i++) {
+        for (int i = 0; i < 50; i++) {
             threads[i] = new Thread(() -> {
                 for (int j = 0; j < 10; j++) {
                     if (deck.drawTop() != null) {
@@ -253,11 +230,10 @@ public class ConcurrencyTest {
             threads[i].start();
         }
         
-        for (Thread t : threads) {
-            t.join();
-        }
+        for (Thread t : threads) t.join();
 
-        assertEquals(500, cardsDrawn.get(), "All 500 cards should be drawn");
-        assertEquals(0, deck.size(), "Deck should be empty");
+        // All 500 cards should be drawn
+        assertEquals(500, cardsDrawn.get());
+        assertEquals(0, deck.size());
     }
 }

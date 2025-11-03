@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 /**
- * End-to-end tests that verify exact output format and file contents.
+ * Tests for exact output format - verifies files match specification exactly.
  */
 public class IntegrationTest {
 
@@ -31,11 +31,11 @@ public class IntegrationTest {
     }
 
     /**
-     * Tests immediate win with exact output verification.
-     * Player 1 gets four 1s and wins immediately.
+     * Test exact output format for immediate win.
+     * Verifies every line matches the specification exactly.
      */
     @Test
-    void testImmediateWinExactOutput() throws Exception {
+    void exactOutputFormat() throws Exception {
         int n = 2;
 
         // Build pack where P1 gets four 1s
@@ -50,6 +50,7 @@ public class IntegrationTest {
 
         runGame(n, pack);
 
+        // Verify files exist
         assertTrue(new File("player1_output.txt").exists());
         assertTrue(new File("player2_output.txt").exists());
         assertTrue(new File("deck1_output.txt").exists());
@@ -73,7 +74,7 @@ public class IntegrationTest {
             "player 2 hand: 2 3 4 5"
         ), p2);
 
-        // Verify deck outputs
+        // Verify exact deck outputs
         List<String> d1 = readLines("deck1_output.txt");
         List<String> d2 = readLines("deck2_output.txt");
         assertEquals(List.of("deck1 contents: 9 9 9 9"), d1);
@@ -82,16 +83,21 @@ public class IntegrationTest {
 
     // Helper methods
 
+    /**
+     * Runs a complete game.
+     */
     private void runGame(int n, List<Card> pack) throws InterruptedException {
         List<Player> players = new ArrayList<>();
         List<Deck> decks = new ArrayList<>();
         AtomicBoolean gameWon = new AtomicBoolean(false);
 
+        // Create decks and players
         for (int i = 1; i <= n; i++) decks.add(new Deck(i));
         for (int i = 1; i <= n; i++) {
             players.add(new Player(i, decks.get(i - 1), decks.get(i % n), gameWon, players));
         }
 
+        // Deal cards
         int idx = 0;
         for (int r = 0; r < 4; r++) {
             for (Player p : players) p.addCardToHand(pack.get(idx++));
@@ -102,6 +108,7 @@ public class IntegrationTest {
             }
         }
 
+        // Run game
         List<Thread> threads = new ArrayList<>();
         for (Player p : players) {
             Thread t = new Thread(p);
@@ -116,6 +123,9 @@ public class IntegrationTest {
         }
     }
 
+    /**
+     * Writes deck output file.
+     */
     private void writeDeckOutput(Deck deck) {
         try (BufferedWriter w = new BufferedWriter(new FileWriter("deck" + deck.getId() + "_output.txt"))) {
             w.write("deck" + deck.getId() + " contents:");
@@ -124,6 +134,9 @@ public class IntegrationTest {
         } catch (IOException ignored) {}
     }
 
+    /**
+     * Reads all lines from file.
+     */
     private List<String> readLines(String file) throws IOException {
         List<String> lines = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {

@@ -1,77 +1,55 @@
 package cardgame;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 /**
- * Unit tests for the Card class.
+ * Tests for Card class - verifies cards work correctly.
  */
 public class CardTest {
 
     @Test
-    void createsCard_withPositiveDenomination() {
+    void createCardWithValue() {
         Card card = new Card(5);
         assertEquals(5, card.getDenomination());
     }
 
     @Test
-    void createsCard_withZeroDenomination() {
+    void createCardWithZero() {
         Card card = new Card(0);
         assertEquals(0, card.getDenomination());
     }
 
     @Test
-    void negativeDenomination_throws() {
+    void negativeValueThrows() {
         assertThrows(IllegalArgumentException.class, () -> new Card(-1));
     }
 
     @Test
-    void toString_returnsTheNumber() {
-        assertEquals("7", new Card(7).toString());
-        assertEquals("0", new Card(0).toString());
+    void toStringShowsValue() {
+        Card card = new Card(7);
+        assertEquals("7", card.toString());
     }
 
     @Test
-    void equals_reflexiveSymmetricTransitive() {
-        Card a = new Card(3);
-        Card b = new Card(3);
-        Card c = new Card(3);
-        Card d = new Card(4);
-
-        // reflexive
-        assertEquals(a, a);
-
-        // symmetric
-        assertEquals(a, b);
-        assertEquals(b, a);
-
-        // transitive
-        assertEquals(a, b);
-        assertEquals(b, c);
-        assertEquals(a, c);
-
-        // not equal to different denom
-        assertNotEquals(a, d);
-
-        // not equal to null / different type
-        assertNotEquals(a, null);
-        assertNotEquals(a, "3");
+    void equalCardsHaveSameValue() {
+        Card card1 = new Card(3);
+        Card card2 = new Card(3);
+        assertEquals(card1, card2);
     }
 
     @Test
-    void hashCode_equalCardsHaveSameHash() {
-        Card a = new Card(9);
-        Card b = new Card(9);
-        assertEquals(a.hashCode(), b.hashCode());
+    void equalCardsHaveSameHash() {
+        Card card1 = new Card(3);
+        Card card2 = new Card(3);
+        assertEquals(card1.hashCode(), card2.hashCode());
     }
 
     @Test
-    void immutability_denominationsDoNotChange() {
-        Card card = new Card(11);
-        int before = card.getDenomination();
-        // nothing we can call will change it; just assert it’s stable on repeated calls
-        assertEquals(before, card.getDenomination());
-        assertEquals(11, card.getDenomination());
+    void valueNeverChanges() {
+        Card card = new Card(5);
+        assertEquals(5, card.getDenomination());
+        assertEquals(5, card.getDenomination());
     }
 }

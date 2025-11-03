@@ -6,59 +6,45 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 
 /**
- * Unit tests for the Deck class.
+ * Tests for Deck class - verifies FIFO behavior and basic operations.
  */
 public class DeckTest {
 
     @Test
-    void testDeckCreation() {
+    void createDeck() {
         Deck deck = new Deck(1);
         assertEquals(1, deck.getId());
         assertEquals(0, deck.size());
     }
 
     @Test
-    void testDiscardCard() {
+    void addCard() {
         Deck deck = new Deck(1);
-        Card card = new Card(5);
-        deck.discardBottom(card);
+        deck.discardBottom(new Card(5));
         assertEquals(1, deck.size());
     }
 
     @Test
-    void testFIFOBehavior() {
+    void drawInFIFOOrder() {
         Deck deck = new Deck(1);
-        Card card1 = new Card(1);
-        Card card2 = new Card(2);
-        Card card3 = new Card(3);
+        deck.discardBottom(new Card(1));
+        deck.discardBottom(new Card(2));
+        deck.discardBottom(new Card(3));
 
-        deck.discardBottom(card1);
-        deck.discardBottom(card2);
-        deck.discardBottom(card3);
-
-        assertEquals(3, deck.size());
-
-        Card drawn1 = deck.drawTop();
-        assertEquals(1, drawn1.getDenomination());
-
-        Card drawn2 = deck.drawTop();
-        assertEquals(2, drawn2.getDenomination());
-
-        Card drawn3 = deck.drawTop();
-        assertEquals(3, drawn3.getDenomination());
-
+        assertEquals(1, deck.drawTop().getDenomination());
+        assertEquals(2, deck.drawTop().getDenomination());
+        assertEquals(3, deck.drawTop().getDenomination());
         assertEquals(0, deck.size());
     }
 
     @Test
-    void testDrawFromEmptyDeck() {
+    void drawFromEmpty() {
         Deck deck = new Deck(1);
-        Card drawn = deck.drawTop();
-        assertNull(drawn);
+        assertNull(deck.drawTop());
     }
 
     @Test
-    void testGetContents() {
+    void getContents() {
         Deck deck = new Deck(1);
         deck.discardBottom(new Card(1));
         deck.discardBottom(new Card(2));
@@ -71,7 +57,7 @@ public class DeckTest {
     }
 
     @Test
-    void testDiscardNullThrows() {
+    void nullCardThrows() {
         Deck deck = new Deck(1);
         assertThrows(NullPointerException.class, () -> deck.discardBottom(null));
     }

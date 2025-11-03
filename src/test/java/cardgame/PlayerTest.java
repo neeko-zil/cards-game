@@ -9,12 +9,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import org.junit.jupiter.api.Test;
 
 /**
- * Unit tests for the Player class.
+ * Tests for Player class - verifies player behavior and hand management.
  */
 public class PlayerTest {
 
     @Test
-    void testPlayerCreation() {
+    void createPlayer() {
         Deck leftDeck = new Deck(1);
         Deck rightDeck = new Deck(2);
         AtomicBoolean gameWon = new AtomicBoolean(false);
@@ -27,13 +27,10 @@ public class PlayerTest {
     }
 
     @Test
-    void testAddCardToHand() {
+    void addCardsToHand() {
         Deck leftDeck = new Deck(1);
         Deck rightDeck = new Deck(2);
-        AtomicBoolean gameWon = new AtomicBoolean(false);
-        List<Player> players = new ArrayList<>();
-
-        Player player = new Player(1, leftDeck, rightDeck, gameWon, players);
+        Player player = new Player(1, leftDeck, rightDeck, new AtomicBoolean(false), new ArrayList<>());
 
         player.addCardToHand(new Card(5));
         player.addCardToHand(new Card(3));
@@ -44,53 +41,40 @@ public class PlayerTest {
     }
 
     @Test
-    void testWinDetectionWithFourSameCards() {
+    void winWithFourSameCards() {
         Deck leftDeck = new Deck(1);
         Deck rightDeck = new Deck(2);
-        AtomicBoolean gameWon = new AtomicBoolean(false);
-        List<Player> players = new ArrayList<>();
+        Player player = new Player(1, leftDeck, rightDeck, new AtomicBoolean(false), new ArrayList<>());
 
-        Player player = new Player(1, leftDeck, rightDeck, gameWon, players);
-
-        // Add four cards of same value
         player.addCardToHand(new Card(7));
         player.addCardToHand(new Card(7));
         player.addCardToHand(new Card(7));
         player.addCardToHand(new Card(7));
 
-        // Player should detect win when thread runs
         assertEquals(4, player.getHand().size());
     }
 
     @Test
-    void testWinDetectionWithMixedCards() {
+    void noWinWithMixedCards() {
         Deck leftDeck = new Deck(1);
         Deck rightDeck = new Deck(2);
-        AtomicBoolean gameWon = new AtomicBoolean(false);
-        List<Player> players = new ArrayList<>();
+        Player player = new Player(1, leftDeck, rightDeck, new AtomicBoolean(false), new ArrayList<>());
 
-        Player player = new Player(1, leftDeck, rightDeck, gameWon, players);
-
-        // Add mixed cards - not a winning hand
         player.addCardToHand(new Card(1));
         player.addCardToHand(new Card(2));
         player.addCardToHand(new Card(3));
         player.addCardToHand(new Card(4));
 
         assertEquals(4, player.getHand().size());
-        // This is not a winning hand (all different values)
     }
 
     @Test
-    void testWinWithNonPreferredValue() {
+    void winWithNonPreferred() {
         Deck leftDeck = new Deck(1);
         Deck rightDeck = new Deck(2);
-        AtomicBoolean gameWon = new AtomicBoolean(false);
-        List<Player> players = new ArrayList<>();
+        Player player = new Player(1, leftDeck, rightDeck, new AtomicBoolean(false), new ArrayList<>());
 
-        Player player = new Player(1, leftDeck, rightDeck, gameWon, players);
-
-        // Player 1 prefers 1s, but wins with 5s (per spec - still valid)
+        // Player 1 prefers 1s, but wins with 5s
         player.addCardToHand(new Card(5));
         player.addCardToHand(new Card(5));
         player.addCardToHand(new Card(5));
@@ -100,7 +84,7 @@ public class PlayerTest {
     }
 
     @Test
-    void testPlayerNotificationMechanism() {
+    void notifyWinner() {
         Deck leftDeck = new Deck(1);
         Deck rightDeck = new Deck(2);
         AtomicBoolean gameWon = new AtomicBoolean(false);
@@ -112,20 +96,14 @@ public class PlayerTest {
         players.add(player1);
         players.add(player2);
 
-        // Simulate player 2 notifying player 1
         player1.notifyWinner(2);
-
-        // Notification mechanism is tested (winnerId is set internally)
     }
 
     @Test
-    void testGetHandReturnsDefensiveCopy() {
+    void getHandCopies() {
         Deck leftDeck = new Deck(1);
         Deck rightDeck = new Deck(2);
-        AtomicBoolean gameWon = new AtomicBoolean(false);
-        List<Player> players = new ArrayList<>();
-
-        Player player = new Player(1, leftDeck, rightDeck, gameWon, players);
+        Player player = new Player(1, leftDeck, rightDeck, new AtomicBoolean(false), new ArrayList<>());
 
         player.addCardToHand(new Card(1));
         player.addCardToHand(new Card(2));
@@ -133,24 +111,20 @@ public class PlayerTest {
         List<Card> hand1 = player.getHand();
         List<Card> hand2 = player.getHand();
 
-        // Should be different List objects (defensive copy)
+        // Different objects (defensive copy)
         assertFalse(hand1 == hand2);
-        // But same content
         assertEquals(hand1.size(), hand2.size());
     }
 
     @Test
-    void testPreferredValueMatchesPlayerId() {
+    void playerIdMatchesPreferred() {
         Deck leftDeck = new Deck(1);
         Deck rightDeck = new Deck(2);
-        AtomicBoolean gameWon = new AtomicBoolean(false);
-        List<Player> players = new ArrayList<>();
 
-        Player player3 = new Player(3, leftDeck, rightDeck, gameWon, players);
-        Player player7 = new Player(7, leftDeck, rightDeck, gameWon, players);
+        Player player3 = new Player(3, leftDeck, rightDeck, new AtomicBoolean(false), new ArrayList<>());
+        Player player7 = new Player(7, leftDeck, rightDeck, new AtomicBoolean(false), new ArrayList<>());
 
         assertEquals(3, player3.getId());
         assertEquals(7, player7.getId());
-        // Preferred values are set to match IDs (tested indirectly through gameplay)
     }
 }
