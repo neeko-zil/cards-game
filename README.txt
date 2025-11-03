@@ -1,9 +1,4 @@
-README.txt
-
 ECM2414 Software Development – Card Game Project (2025/26)
-
-Overview
-This program simulates a multi-threaded card game as described in the ECM2414 coursework specification. Each player runs on a separate thread and draws and discards cards between decks arranged in a ring. The game ends when any player has four cards of the same value.
 
 The project contains the following files:
 cards.jar – executable program containing both source (.java) and compiled (.class) files
