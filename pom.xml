@@ -67,71 +67,60 @@
                 </configuration>
             </plugin>
 
+            <!-- Resources plugin to copy .java files to target/classes -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <id>copy-sources</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/java</directory>
+                                    <includes>
+                                        <include>**/*.java</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
             <!-- Jar plugin with Main-Class -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>3.3.0</version>
                 <configuration>
+                    <finalName>cards</finalName>
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <mainClass>cardgame.CardGame</mainClass>
                         </manifest>
-                        <!-- Include .java files as required by spec -->
                         <addMavenDescriptor>false</addMavenDescriptor>
                     </archive>
-                    <includes>
-                        <include>**/*.class</include>
-                        <include>**/*.java</include>
-                    </includes>
                 </configuration>
             </plugin>
 
-            <!-- Source plugin to attach sources to jar -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>3.3.0</version>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
 
-            <!-- Assembly plugin: used to build cardsTest.zip easily -->
+            <!-- Assembly plugin: disabled by default, use -PcardsTest profile to build test zip -->
+            <!-- Commented out to prevent build failures when no descriptor exists -->
+            <!--
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>3.6.0</version>
-                <executions>
-                    <execution>
-                        <id>make-test-zip</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                        <configuration>
-                            <descriptors>
-                                <!-- optional: descriptor under src/assembly/cardsTest.xml -->
-                            </descriptors>
-                            <finalName>cardsTest</finalName>
-                            <appendAssemblyId>false</appendAssemblyId>
-                            <formats>
-                                <format>zip</format>
-                            </formats>
-                            <includeBaseDirectory>true</includeBaseDirectory>
-                            <includeProjectDependencies>true</includeProjectDependencies>
-                            <includeSource>true</includeSource>
-                            <tarLongFileMode>posix</tarLongFileMode>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
+            -->
 
         </plugins>
     </build>

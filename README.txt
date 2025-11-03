@@ -5,6 +5,21 @@ cards.jar – executable program containing both source (.java) and compiled (.c
 cardsTest.zip – test code and test resources
 Report/ – design, testing, and pair programming log reports
 
+How to Build the JAR File
+
+To create cards.jar with both source (.java) and compiled (.class) files:
+
+Requirements:
+Java 11 or higher
+Maven 3.6+
+
+Steps:
+1. Navigate to the project root directory (where pom.xml is located)
+2. Run: mvn clean package
+3. The cards.jar file will be created directly in the target/ directory
+
+This creates target/cards.jar containing both .class and .java files as required.
+
 How to Run the Program
 
 Requirements:
