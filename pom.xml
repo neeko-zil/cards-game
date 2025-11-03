@@ -11,7 +11,7 @@
     <packaging>jar</packaging>
 
     <name>Card Game</name>
-    <description>Card game simulation for ECM2414</description>
+    <description>Card game simulation for ECM2414 Coursework</description>
 
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
@@ -21,7 +21,7 @@
     </properties>
 
     <dependencies>
-        <!-- JUnit 5 for testing -->
+        <!-- JUnit 5 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
@@ -44,6 +44,7 @@
 
     <build>
         <plugins>
+
             <!-- Compiler plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -52,17 +53,21 @@
                 <configuration>
                     <source>11</source>
                     <target>11</target>
+                    <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
 
-            <!-- Surefire plugin for running tests -->
+            <!-- Surefire plugin (JUnit 5 support) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.1.2</version>
+                <configuration>
+                    <useModulePath>false</useModulePath>
+                </configuration>
             </plugin>
 
-            <!-- JAR plugin with Main-Class manifest -->
+            <!-- Jar plugin with Main-Class -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -70,13 +75,20 @@
                 <configuration>
                     <archive>
                         <manifest>
+                            <addClasspath>true</addClasspath>
                             <mainClass>cardgame.CardGame</mainClass>
                         </manifest>
+                        <!-- Include .java files as required by spec -->
+                        <addMavenDescriptor>false</addMavenDescriptor>
                     </archive>
+                    <includes>
+                        <include>**/*.class</include>
+                        <include>**/*.java</include>
+                    </includes>
                 </configuration>
             </plugin>
 
-            <!-- Source plugin to include source files in JAR -->
+            <!-- Source plugin to attach sources to jar -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
@@ -90,6 +102,62 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- Assembly plugin: used to build cardsTest.zip easily -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>make-test-zip</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptors>
+                                <!-- optional: descriptor under src/assembly/cardsTest.xml -->
+                            </descriptors>
+                            <finalName>cardsTest</finalName>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <formats>
+                                <format>zip</format>
+                            </formats>
+                            <includeBaseDirectory>true</includeBaseDirectory>
+                            <includeProjectDependencies>true</includeProjectDependencies>
+                            <includeSource>true</includeSource>
+                            <tarLongFileMode>posix</tarLongFileMode>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
     </build>
+
+    <!-- Optional profile: run `mvn clean package -PcardsTest` to generate cardsTest.zip -->
+    <profiles>
+        <profile>
+            <id>cardsTest</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <configuration>
+                            <finalName>cardsTest</finalName>
+                            <formats>
+                                <format>zip</format>
+                            </formats>
+                            <includeBaseDirectory>true</includeBaseDirectory>
+                            <includeProjectDependencies>true</includeProjectDependencies>
+                            <includeSource>true</includeSource>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
 </project>
