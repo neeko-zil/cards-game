@@ -8,11 +8,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import org.junit.jupiter.api.Test;
 
-/**
- * Tests for Player class - verifies player behavior and hand management.
- */
+// Tests for Player class
 public class PlayerTest {
 
+    // create new player
     @Test
     void createPlayer() {
         Deck leftDeck = new Deck(1);
@@ -26,6 +25,7 @@ public class PlayerTest {
         assertEquals(0, player.getHand().size());
     }
 
+    // add cards to hand
     @Test
     void addCardsToHand() {
         Deck leftDeck = new Deck(1);
@@ -40,6 +40,7 @@ public class PlayerTest {
         assertEquals(3, player.getHand().get(1).getDenomination());
     }
 
+    // win with four same cards
     @Test
     void winWithFourSameCards() {
         Deck leftDeck = new Deck(1);
@@ -54,6 +55,7 @@ public class PlayerTest {
         assertEquals(4, player.getHand().size());
     }
 
+    // mixed cards don't win
     @Test
     void noWinWithMixedCards() {
         Deck leftDeck = new Deck(1);
@@ -68,13 +70,13 @@ public class PlayerTest {
         assertEquals(4, player.getHand().size());
     }
 
+    // can win with non-preferred cards
     @Test
     void winWithNonPreferred() {
         Deck leftDeck = new Deck(1);
         Deck rightDeck = new Deck(2);
         Player player = new Player(1, leftDeck, rightDeck, new AtomicBoolean(false), new ArrayList<>());
 
-        // Player 1 prefers 1s, but wins with 5s
         player.addCardToHand(new Card(5));
         player.addCardToHand(new Card(5));
         player.addCardToHand(new Card(5));
@@ -83,6 +85,7 @@ public class PlayerTest {
         assertEquals(4, player.getHand().size());
     }
 
+    // notify winner test
     @Test
     void notifyWinner() {
         Deck leftDeck = new Deck(1);
@@ -99,6 +102,7 @@ public class PlayerTest {
         player1.notifyWinner(2);
     }
 
+    // getHand should return copies
     @Test
     void getHandCopies() {
         Deck leftDeck = new Deck(1);
@@ -111,11 +115,11 @@ public class PlayerTest {
         List<Card> hand1 = player.getHand();
         List<Card> hand2 = player.getHand();
 
-        // Different objects (defensive copy)
         assertFalse(hand1 == hand2);
         assertEquals(hand1.size(), hand2.size());
     }
 
+    // player ID matches preferred card
     @Test
     void playerIdMatchesPreferred() {
         Deck leftDeck = new Deck(1);

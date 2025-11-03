@@ -15,55 +15,47 @@ import org.junit.jupiter.api.AfterEach;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
-/**
- * Tests for complete game scenarios - verifies games run correctly from start to finish.
- */
+// Tests for complete game scenarios
 public class GameFlowTest {
 
     @AfterEach
     void cleanup() {
-        // Clean up output files after each test
+        // clean up output files
         for (int i = 1; i <= 3; i++) {
             new File("player" + i + "_output.txt").delete();
             new File("deck" + i + "_output.txt").delete();
         }
     }
 
-    /**
-     * Test immediate win scenario.
-     * Player 1 gets four 1s on initial deal and wins right away.
-     */
+    // player wins immediately on deal
     @Test
     void immediateWin() throws Exception {
         List<Card> pack = new ArrayList<>();
         
-        // P1 gets four 1s, P2 gets mixed cards
+        // P1 gets four 1s
         Collections.addAll(pack,
             new Card(1), new Card(2),
             new Card(1), new Card(3),
             new Card(1), new Card(4),
             new Card(1), new Card(5));
         
-        // Fill remaining slots for decks
+        // fill decks
         for (int i = 0; i < 8; i++) pack.add(new Card(9));
 
         runGame(2, pack);
 
-        // Verify P1 won
+        // check P1 won
         String p1 = readFile("player1_output.txt");
         assertTrue(p1.contains("player 1 wins"));
         assertTrue(p1.contains("1 1 1 1"));
     }
 
-    /**
-     * Test game that runs multiple turns before someone wins.
-     * Player 1 starts with [1,1,1,2] and can draw a 1 to win.
-     */
+    // game runs multiple turns
     @Test
     void multiTurnWin() throws Exception {
         List<Card> pack = new ArrayList<>();
         
-        // P1: [1,1,1,2], deck1 has 1 at front for P1 to draw
+        // P1 can draw winning card
         Collections.addAll(pack,
             new Card(1), new Card(2),
             new Card(1), new Card(3),
@@ -76,44 +68,42 @@ public class GameFlowTest {
 
         runGame(2, pack);
 
-        // One player should win
+        // check someone won
         String p1 = readFile("player1_output.txt");
         String p2 = readFile("player2_output.txt");
         assertTrue(p1.contains("wins") || p2.contains("wins"));
     }
 
-    // Helper methods
+    // helper methods
 
-    /**
-     * Runs a complete game with given pack.
-     */
+    // run a game
     private void runGame(int n, List<Card> pack) throws InterruptedException {
         List<Player> players = new ArrayList<>();
         List<Deck> decks = new ArrayList<>();
         AtomicBoolean gameWon = new AtomicBoolean(false);
 
-        // Create decks
+        // create decks
         for (int i = 1; i <= n; i++) decks.add(new Deck(i));
         
-        // Create players with ring topology
+        // create players
         for (int i = 1; i <= n; i++) {
             players.add(new Player(i, decks.get(i - 1), decks.get(i % n), gameWon, players));
         }
 
-        // Deal cards to players
+        // deal cards to players
         int idx = 0;
         for (int r = 0; r < 4; r++) {
             for (Player p : players) p.addCardToHand(pack.get(idx++));
         }
         
-        // Fill decks with remaining cards
+        // fill decks
         while (idx < pack.size()) {
             for (Deck d : decks) {
                 if (idx < pack.size()) d.discardBottom(pack.get(idx++));
             }
         }
 
-        // Start all player threads
+        // start threads
         List<Thread> threads = new ArrayList<>();
         for (Player p : players) {
             Thread t = new Thread(p);
@@ -121,18 +111,16 @@ public class GameFlowTest {
             t.start();
         }
         
-        // Wait for all threads to finish
+        // wait for threads
         for (Thread t : threads) t.join();
 
-        // Write deck outputs
+        // write deck outputs
         for (Deck d : decks) {
             writeDeckOutput(d);
         }
     }
 
-    /**
-     * Writes deck output file.
-     */
+    // write deck output
     private void writeDeckOutput(Deck deck) {
         try (BufferedWriter w = new BufferedWriter(new FileWriter("deck" + deck.getId() + "_output.txt"))) {
             w.write("deck" + deck.getId() + " contents:");
@@ -141,9 +129,7 @@ public class GameFlowTest {
         } catch (IOException ignored) {}
     }
 
-    /**
-     * Reads entire file as string.
-     */
+    // read file
     private String readFile(String file) throws IOException {
         StringBuilder sb = new StringBuilder();
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {

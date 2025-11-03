@@ -9,20 +9,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
-/**
- * Tests for thread-safety - verifies concurrent operations work correctly.
- */
+// Tests for thread-safety
 public class ConcurrencyTest {
 
-    /**
-     * Test that 10 threads can draw from one deck without losing cards.
-     * Verifies all 100 cards are drawn and deck ends empty.
-     */
+    // multiple threads drawing from deck
     @Test
     void concurrentDrawing() throws InterruptedException {
         Deck deck = new Deck(1);
         
-        // Add 100 cards
+        // add 100 cards
         for (int i = 1; i <= 100; i++) {
             deck.discardBottom(new Card(i));
         }
@@ -47,15 +42,12 @@ public class ConcurrencyTest {
         
         for (Thread t : threads) t.join();
 
-        // Verify all cards drawn
+        // check all cards drawn
         assertEquals(100, drawnCards.size());
         assertEquals(0, deck.size());
     }
 
-    /**
-     * Test that 10 threads can add cards to one deck safely.
-     * Verifies all 100 cards are added.
-     */
+    // multiple threads adding to deck
     @Test
     void concurrentDiscarding() throws InterruptedException {
         Deck deck = new Deck(1);
@@ -75,14 +67,11 @@ public class ConcurrencyTest {
         
         for (Thread t : threads) t.join();
 
-        // Verify all cards added
+        // check all cards added
         assertEquals(100, deck.size());
     }
 
-    /**
-     * Test that only one thread can win when many try at once.
-     * Verifies AtomicBoolean compareAndSet works correctly.
-     */
+    // only one thread can win
     @Test
     void oneWinnerOnly() throws InterruptedException {
         AtomicBoolean gameWon = new AtomicBoolean(false);
@@ -102,25 +91,22 @@ public class ConcurrencyTest {
         
         for (Thread t : threads) t.join();
 
-        // Only one should succeed
+        // only one succeeds
         assertEquals(1, winnerCount.get());
         assertTrue(gameWon.get());
     }
 
-    /**
-     * Test that getContents() is thread-safe.
-     * Verifies concurrent calls return correct snapshots.
-     */
+    // getContents is thread-safe
     @Test
     void getContentsThreadSafe() throws InterruptedException {
         Deck deck = new Deck(1);
         
-        // Add 50 cards
+        // add 50 cards
         for (int i = 1; i <= 50; i++) {
             deck.discardBottom(new Card(i));
         }
         
-        // 5 threads get snapshots at same time
+        // 5 threads get snapshots
         Thread[] threads = new Thread[5];
         List<List<Card>> snapshots = new ArrayList<>();
         
@@ -136,28 +122,25 @@ public class ConcurrencyTest {
         
         for (Thread t : threads) t.join();
 
-        // All snapshots should have 50 cards
+        // all snapshots have 50 cards
         assertEquals(5, snapshots.size());
         for (List<Card> snapshot : snapshots) {
             assertEquals(50, snapshot.size());
         }
     }
 
-    /**
-     * Test ordered locking prevents deadlock.
-     * Both threads lock decks in same order (deck1 then deck2).
-     */
+    // ordered locking prevents deadlock
     @Test
     void orderedLockingNoDeadlock() throws InterruptedException {
         Deck deck1 = new Deck(1);
         Deck deck2 = new Deck(2);
         
-        // Add cards to deck1
+        // add cards to deck1
         for (int i = 1; i <= 20; i++) {
             deck1.discardBottom(new Card(i));
         }
         
-        // Both threads lock in same order: deck1 first, then deck2
+        // both threads lock same order
         Thread thread1 = new Thread(() -> {
             for (int i = 0; i < 100; i++) {
                 deck1.getLock().lock();
@@ -195,22 +178,19 @@ public class ConcurrencyTest {
         thread1.start();
         thread2.start();
         
-        // If deadlock occurs, these will timeout
+        // check no deadlock
         thread1.join(5000);
         thread2.join(5000);
         
-        assertTrue(true); // No deadlock
+        assertTrue(true);
     }
 
-    /**
-     * Stress test with many threads.
-     * 50 threads draw 500 cards total from one deck.
-     */
+    // stress test with many threads
     @Test
     void manyThreadsStressTest() throws InterruptedException {
         Deck deck = new Deck(1);
         
-        // Add 500 cards
+        // add 500 cards
         for (int i = 1; i <= 500; i++) {
             deck.discardBottom(new Card(i));
         }
@@ -232,7 +212,7 @@ public class ConcurrencyTest {
         
         for (Thread t : threads) t.join();
 
-        // All 500 cards should be drawn
+        // all 500 cards drawn
         assertEquals(500, cardsDrawn.get());
         assertEquals(0, deck.size());
     }

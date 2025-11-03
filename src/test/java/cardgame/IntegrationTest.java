@@ -16,29 +16,24 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
-/**
- * Tests for exact output format - verifies files match specification exactly.
- */
+// Tests for exact output format
 public class IntegrationTest {
 
     @AfterEach
     void cleanup() {
-        // Clean up output files after each test
+        // clean up output files
         for (int i = 1; i <= 3; i++) {
             new File("player" + i + "_output.txt").delete();
             new File("deck" + i + "_output.txt").delete();
         }
     }
 
-    /**
-     * Test exact output format for immediate win.
-     * Verifies every line matches the specification exactly.
-     */
+    // check exact output format
     @Test
     void exactOutputFormat() throws Exception {
         int n = 2;
 
-        // Build pack where P1 gets four 1s
+        // P1 gets four 1s
         List<Card> pack = new ArrayList<>();
         Collections.addAll(pack,
             new Card(1), new Card(2),
@@ -50,13 +45,13 @@ public class IntegrationTest {
 
         runGame(n, pack);
 
-        // Verify files exist
+        // check files exist
         assertTrue(new File("player1_output.txt").exists());
         assertTrue(new File("player2_output.txt").exists());
         assertTrue(new File("deck1_output.txt").exists());
         assertTrue(new File("deck2_output.txt").exists());
 
-        // Verify exact player1 output (winner)
+        // check player1 output
         List<String> p1 = readLines("player1_output.txt");
         assertEquals(List.of(
             "player 1 initial hand 1 1 1 1",
@@ -65,7 +60,7 @@ public class IntegrationTest {
             "player 1 final hand: 1 1 1 1"
         ), p1);
 
-        // Verify exact player2 output (non-winner)
+        // check player2 output
         List<String> p2 = readLines("player2_output.txt");
         assertEquals(List.of(
             "player 2 initial hand 2 3 4 5",
@@ -74,30 +69,28 @@ public class IntegrationTest {
             "player 2 hand: 2 3 4 5"
         ), p2);
 
-        // Verify exact deck outputs
+        // check deck outputs
         List<String> d1 = readLines("deck1_output.txt");
         List<String> d2 = readLines("deck2_output.txt");
         assertEquals(List.of("deck1 contents: 9 9 9 9"), d1);
         assertEquals(List.of("deck2 contents: 9 9 9 9"), d2);
     }
 
-    // Helper methods
+    // helper methods
 
-    /**
-     * Runs a complete game.
-     */
+    // run a game
     private void runGame(int n, List<Card> pack) throws InterruptedException {
         List<Player> players = new ArrayList<>();
         List<Deck> decks = new ArrayList<>();
         AtomicBoolean gameWon = new AtomicBoolean(false);
 
-        // Create decks and players
+        // create decks and players
         for (int i = 1; i <= n; i++) decks.add(new Deck(i));
         for (int i = 1; i <= n; i++) {
             players.add(new Player(i, decks.get(i - 1), decks.get(i % n), gameWon, players));
         }
 
-        // Deal cards
+        // deal cards
         int idx = 0;
         for (int r = 0; r < 4; r++) {
             for (Player p : players) p.addCardToHand(pack.get(idx++));
@@ -108,7 +101,7 @@ public class IntegrationTest {
             }
         }
 
-        // Run game
+        // run game
         List<Thread> threads = new ArrayList<>();
         for (Player p : players) {
             Thread t = new Thread(p);
@@ -117,15 +110,13 @@ public class IntegrationTest {
         }
         for (Thread t : threads) t.join();
 
-        // Write deck outputs
+        // write deck outputs
         for (Deck d : decks) {
             writeDeckOutput(d);
         }
     }
 
-    /**
-     * Writes deck output file.
-     */
+    // write deck output
     private void writeDeckOutput(Deck deck) {
         try (BufferedWriter w = new BufferedWriter(new FileWriter("deck" + deck.getId() + "_output.txt"))) {
             w.write("deck" + deck.getId() + " contents:");
@@ -134,9 +125,7 @@ public class IntegrationTest {
         } catch (IOException ignored) {}
     }
 
-    /**
-     * Reads all lines from file.
-     */
+    // read lines from file
     private List<String> readLines(String file) throws IOException {
         List<String> lines = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {

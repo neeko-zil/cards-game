@@ -5,11 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 
-/**
- * Tests for Deck class - verifies FIFO behavior and basic operations.
- */
+// Tests for Deck class
 public class DeckTest {
 
+    // create new deck
     @Test
     void createDeck() {
         Deck deck = new Deck(1);
@@ -17,6 +16,7 @@ public class DeckTest {
         assertEquals(0, deck.size());
     }
 
+    // add card to deck
     @Test
     void addCard() {
         Deck deck = new Deck(1);
@@ -24,6 +24,7 @@ public class DeckTest {
         assertEquals(1, deck.size());
     }
 
+    // should draw in FIFO order
     @Test
     void drawInFIFOOrder() {
         Deck deck = new Deck(1);
@@ -37,12 +38,14 @@ public class DeckTest {
         assertEquals(0, deck.size());
     }
 
+    // draw from empty deck returns null
     @Test
     void drawFromEmpty() {
         Deck deck = new Deck(1);
         assertNull(deck.drawTop());
     }
 
+    // get contents of deck
     @Test
     void getContents() {
         Deck deck = new Deck(1);
@@ -56,6 +59,7 @@ public class DeckTest {
         assertEquals(3, deck.getContents().get(2).getDenomination());
     }
 
+    // null card should throw error
     @Test
     void nullCardThrows() {
         Deck deck = new Deck(1);
