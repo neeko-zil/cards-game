@@ -28,30 +28,28 @@ public class CardGame {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         try {
-            // 1) Prompt for number of players (must be >= 1)
+            // Prompt for number of players and pack file
             int n = promptForNumberOfPlayers(sc);
-
-            // 2) Prompt for pack file (must be exactly 8n non-negative integers, one per line)
             List<Integer> packInts = promptForPack(sc, n);
 
-            // 3) Convert integers to Card objects
+            // Convert integers to Card objects
             List<Card> pack = new ArrayList<>(packInts.size());
             for (int v : packInts) {
                 pack.add(new Card(v));
             }
 
-            // 4) Set up players and decks
+            // Set up players and decks
             System.out.println("Starting game with " + n + " players...");
             List<Player> players = new ArrayList<>(n);
             List<Deck> decks = new ArrayList<>(n);
             AtomicBoolean gameWon = new AtomicBoolean(false);
 
-            // Create n decks (1..n)
+            // Create n decks
             for (int i = 1; i <= n; i++) {
                 decks.add(new Deck(i));
             }
 
-            // Create n players with ring topology:
+            // Create n players with ring topology
             // player i draws from deck i (left) and discards to deck i+1 (right; wrap to 1 after n)
             for (int i = 1; i <= n; i++) {
                 Deck leftDeck = decks.get(i - 1);         // deck i
@@ -60,8 +58,8 @@ public class CardGame {
                 players.add(player);
             }
 
-            // 5) Distribute cards:
-            // - First 4n cards to players in round-robin (4 cards per player)
+            // Distribute cards:
+            // First 4n cards to players in round-robin (4 cards per player)
             int cardIndex = 0;
             for (int round = 0; round < 4; round++) {
                 for (Player player : players) {
@@ -69,7 +67,7 @@ public class CardGame {
                 }
             }
 
-            // - Remaining 4n cards to decks in round-robin order
+            // Remaining 4n cards to decks in round-robin order
             while (cardIndex < pack.size()) {
                 for (Deck deck : decks) {
                     if (cardIndex < pack.size()) {
@@ -78,7 +76,7 @@ public class CardGame {
                 }
             }
 
-            // 6) Start all player threads
+            // Start player threads
             List<Thread> threads = new ArrayList<>(n);
             for (Player player : players) {
                 Thread t = new Thread(player);
@@ -86,7 +84,7 @@ public class CardGame {
                 t.start();
             }
 
-            // 7) Wait for all players to finish
+            // Wait for all players to finish
             for (Thread t : threads) {
                 try {
                     t.join();
@@ -97,7 +95,7 @@ public class CardGame {
                 }
             }
 
-            // 8) Write deck output files
+            // Write deck output files
             for (Deck deck : decks) {
                 writeDeckOutput(deck);
             }
@@ -108,6 +106,7 @@ public class CardGame {
 
     // -------------------- INPUT PROMPTS --------------------
 
+    // Ask for num players and validate
     private static int promptForNumberOfPlayers(Scanner sc) {
         int n;
         while (true) {
@@ -125,6 +124,7 @@ public class CardGame {
         }
     }
 
+    // Ask for pack file location and validate 
     private static List<Integer> promptForPack(Scanner sc, int n) {
         while (true) {
             System.out.println("Please enter the location of the pack file:");
@@ -138,19 +138,18 @@ public class CardGame {
         }
     }
 
-    // -------------------- PACK VALIDATION --------------------
+    // ------------------- PACK VALIDATION ---------------
 
     private static final Pattern DIGITS = Pattern.compile("^\\d+$");
 
     /**
      * Validates that the pack file:
-     * - exists, is a regular readable file
-     * - contains exactly 8*n lines
-     * - each line is a single non-negative integer (digits only)
-     * - handles UTF-8 and BOM on the first line
+     * - exists
+     * - contains 8n lines
+     * - each line is a single positive integer digit
      */
     static ValidationResult validatePack(Path path, int n) {
-        // 1) Path checks
+        // Check file exists
         try {
             if (!Files.exists(path)) return ValidationResult.err("file not found: " + path);
             if (!Files.isRegularFile(path)) return ValidationResult.err("not a regular file: " + path);
@@ -159,7 +158,7 @@ public class CardGame {
             return ValidationResult.err("cannot access file: " + se.getMessage());
         }
 
-        // 2) Read all lines (UTF-8)
+        // Read all lines
         final List<String> lines;
         try {
             lines = Files.readAllLines(path, StandardCharsets.UTF_8);
@@ -167,27 +166,20 @@ public class CardGame {
             return ValidationResult.err("failed to read file: " + e.getMessage());
         }
         if (lines.isEmpty()) {
-            return ValidationResult.err("file is empty; expected " + (8 * n) + " lines.");
+            return ValidationResult.err("file is empty: expected " + (8 * n) + " lines.");
         }
 
-        // 3) Parse and validate: exactly one non-negative integer per line
+        // Parse and validate: exactly one positive integer per line
         final List<Integer> out = new ArrayList<>(8 * n);
         int idx = 0;
         for (String raw : lines) {
             idx++;
             String s = raw == null ? "" : raw.trim();
             if (s.isEmpty()) {
-                return ValidationResult.err("line " + idx + " is blank; expected a non-negative integer.");
-            }
-            // Remove BOM on very first line if present
-            if (idx == 1 && !s.isEmpty() && s.charAt(0) == '\uFEFF') {
-                s = s.substring(1).trim();
-                if (s.isEmpty()) {
-                    return ValidationResult.err("line 1 is blank after BOM; expected a non-negative integer.");
-                }
+                return ValidationResult.err("line " + idx + " is blank: expected a positive integer.");
             }
             if (!DIGITS.matcher(s).matches()) {
-                return ValidationResult.err("line " + idx + " is not a non-negative integer: '" + raw + "'");
+                return ValidationResult.err("line " + idx + " is not a positive integer: '" + raw + "'");
             }
             long v;
             try {
@@ -201,10 +193,10 @@ public class CardGame {
             out.add((int) v);
         }
 
-        // 4) Exactly 8n values required
+        // Exactly 8n values required
         int expected = 8 * n;
         if (out.size() != expected) {
-            return ValidationResult.err("pack has " + out.size() + " lines; expected " + expected + " (8 × " + n + ").");
+            return ValidationResult.err("pack has " + out.size() + " lines; expected " + expected);
         }
 
         return ValidationResult.ok(Collections.unmodifiableList(out));
@@ -234,12 +226,9 @@ public class CardGame {
         List<Integer> values() { return values; }
     }
 
-    // -------------------- OUTPUT HELPERS --------------------
+    // -------------------- HELPERS --------------------
 
-    /**
-     * Writes the final contents of a deck to its output file
-     * in the exact required format: "deckX contents: v1 v2 v3 ..."
-     */
+    // Writes the final contents of a deck to its output file
     private static void writeDeckOutput(Deck deck) {
         String filename = "deck" + deck.getId() + "_output.txt";
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
