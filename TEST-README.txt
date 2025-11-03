@@ -1,75 +1,122 @@
-ECM2414 Card Game - Test Suite
-================================
+README.txt
 
-This archive contains the complete test suite for the multi-threaded card game simulation.
+ECM2414 Software Development – Card Game Project (2025/26)
 
-CONTENTS
---------
-- src/test/java/cardgame/*.java    Test source files
-- pom.xml                          Maven configuration (for running tests)
-- test_packs/                      Sample pack files for testing
+Overview
+This program simulates a multi-threaded card game as described in the ECM2414 coursework specification. Each player runs on a separate thread and draws and discards cards between decks arranged in a ring. The game ends when any player has four cards of the same value.
 
-TEST FRAMEWORK
---------------
-JUnit 5 (Jupiter) version 5.10.0
+The project contains the following files:
+cards.jar – executable program containing both source (.java) and compiled (.class) files
+cardsTest.zip – test code and test resources
+Report/ – design, testing, and pair programming log reports
 
-RUNNING THE TESTS
------------------
+How to Run the Program
 
-Prerequisites:
-- Java 11 or higher
-- Maven 3.6+
+Requirements:
+Java 11 or higher
+(Optional) Maven 3.6+ if rebuilding from source
 
-Command to run all tests:
-    mvn test
+Running the compiled jar:
+java -jar cards.jar
 
-Command to run specific test class:
-    mvn test -Dtest=CardTest
-    mvn test -Dtest=DeckTest
-    mvn test -Dtest=IntegrationTest
+When prompted:
+Enter the number of players (integer n).
+Enter the path to a valid card pack file (text file with 8n non-negative integers, one per line).
 
-To run tests with verbose output:
-    mvn test -X
+The game will start automatically and produce:
+playerX_output.txt for each player
+deckX_output.txt for each deck
+It will also print to the console which player wins.
 
-TEST CLASSES
-------------
+Example run:
+Please enter the number of players: 4
+Please enter location of pack: packs/pack1.txt
+player 3 wins
 
-1. CardTest.java
-   - Tests Card class creation with valid/invalid denominations
-   - Verifies immutability
-   - Tests toString() method
+How to Run the Tests
 
-2. DeckTest.java
-   - Tests Deck creation and FIFO behavior
-   - Verifies thread-safe operations
-   - Tests draw from empty deck
-   - Validates getContents() method
+Requirements:
+Java 11 or higher
+Maven 3.6+
 
-3. CardGameTest.java
-   - Tests pack file validation
-   - Verifies handling of negative values
-   - Tests incorrect pack file lengths
+Run all tests from the project root:
+mvn test
 
-4. IntegrationTest.java
-   - Tests complete game with immediate win scenario
-   - Tests concurrent deck access with multiple threads
-   - Verifies player hand management
-   - Tests atomic draw+discard operations
+or if using the packaged test zip:
+Extract cardsTest.zip
+From inside the extracted folder, run:
+mvn test
 
-EXPECTED RESULTS
-----------------
-All tests should pass when run with: mvn test
+Test Suite Description
 
-The integration tests verify:
-- Immediate win detection works correctly
-- Concurrent access to decks is thread-safe
-- Game state management is correct
-- No race conditions or deadlocks occur
+JUnit Version: JUnit 5
 
-MANUAL COMPILATION (if Maven unavailable)
-------------------------------------------
-1. Ensure JUnit 5 JARs are in classpath
-2. Compile: javac -cp junit5.jar -d target/test-classes src/test/java/cardgame/*.java
-3. Run: java -cp junit5.jar:target/test-classes org.junit.platform.console.ConsoleLauncher --scan-classpath
+Test Files:
+CardTest.java – tests card equality, immutability, and hashCode correctness
+DeckTest.java – tests FIFO behaviour and thread safety of draw/discard
+CardGameTest.java – tests pack validation and input errors
+GameFlowTest.java – checks correct game flow, file creation, and winner detection
+ConcurrencyTest.java – checks thread safety, atomic actions, and deadlock prevention
+IntegrationTest.java – runs a full game and verifies file outputs and total card count
 
-Note: Maven is recommended for ease of use.
+All tests can be run automatically using Maven. They cover normal, boundary, and error cases.
+
+Input Pack Format
+
+The input pack file must contain exactly 8n integers, where n is the number of players. Each integer must be non-negative and written on its own line.
+
+Example pack for n = 2:
+1
+2
+3
+4
+1
+2
+3
+4
+1
+2
+3
+4
+1
+2
+3
+4
+
+Output Files
+
+When the game finishes, the program creates the following files:
+player1_output.txt, player2_output.txt, …, playerN_output.txt
+deck1_output.txt, deck2_output.txt, …, deckN_output.txt
+
+Each player file shows:
+Initial hand
+Every draw and discard
+Notification when another player wins
+Final hand before exiting
+
+Each deck file lists the final contents of that deck.
+
+Error Handling
+
+If the input pack is invalid (wrong number of cards, negative values, or non-integers), the program displays an error message and asks for a new input. It does not crash or start the game until valid input is given.
+
+Report Summary
+
+The accompanying report (maximum 6 pages) explains:
+Design choices for production code (≤2 pages)
+Design choices for tests (≤3 pages)
+Pair programming log (≤1 page, signed by both students)
+
+Authors
+
+Developed by:
+Student A (ID: XXXXXXXX)
+Student B (ID: XXXXXXXX)
+
+Module: ECM2414 – Software Development (2025/26)
+Submission Date: 3 November 2025, 12:00 noon
+
+Notes
+
+The program may produce slightly different action orders between runs because of thread scheduling. This is expected behaviour and does not affect correctness. All output formats follow the wording and layout described in the coursework specification.
