@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
  */
 public class DeckTest {
     
+    // Test deck is empty and has an id
     @Test
     public void testDeckCreation() {
         Deck deck = new Deck(1);
@@ -16,6 +17,7 @@ public class DeckTest {
         assertEquals(0, deck.size());
     }
     
+    // Test we can add a card
     @Test
     public void testAddCard() {
         Deck deck = new Deck(1);
@@ -24,6 +26,8 @@ public class DeckTest {
         assertEquals(1, deck.size());
     }
     
+    // Card sshould be able to be added and removed first in first out
+    // Test by essentially reversing the deck
     @Test
     public void testFIFOBehavior() {
         Deck deck = new Deck(1);
@@ -49,6 +53,7 @@ public class DeckTest {
         assertEquals(0, deck.size());
     }
     
+    // Drawing from empty deck shouldn't give a card
     @Test
     public void testDrawFromEmptyDeck() {
         Deck deck = new Deck(1);
@@ -56,6 +61,7 @@ public class DeckTest {
         assertNull(drawn);
     }
     
+    // Test the getContents (all cards in deck) returns correctly
     @Test
     public void testGetContents() {
         Deck deck = new Deck(1);
