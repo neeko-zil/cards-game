@@ -85,14 +85,14 @@ public class IntegrationTest {
         // --- Assertions ---
         assertTrue(gameWon.get(), "Game should have been won immediately by player 1");
 
-        // Files exist
-        assertTrue(new File(tmp.toFile(), "player1_output.txt").exists());
-        assertTrue(new File(tmp.toFile(), "player2_output.txt").exists());
-        assertTrue(new File(tmp.toFile(), "deck1_output.txt").exists());
-        assertTrue(new File(tmp.toFile(), "deck2_output.txt").exists());
+        // Files exist (written to current directory, not tmp - FileWriter doesn't respect user.dir)
+        assertTrue(new File("player1_output.txt").exists(), "player1_output.txt should exist");
+        assertTrue(new File("player2_output.txt").exists(), "player2_output.txt should exist");
+        assertTrue(new File("deck1_output.txt").exists(), "deck1_output.txt should exist");
+        assertTrue(new File("deck2_output.txt").exists(), "deck2_output.txt should exist");
 
         // Winner tail lines present in player1_output.txt
-        try (BufferedReader br = new BufferedReader(new FileReader(new File(tmp.toFile(), "player1_output.txt")))) {
+        try (BufferedReader br = new BufferedReader(new FileReader("player1_output.txt"))) {
             String all = br.lines().reduce("", (a, b) -> a + b + "\n");
             assertTrue(all.contains("player 1 wins"));
             assertTrue(all.contains("player 1 exits"));
@@ -101,7 +101,7 @@ public class IntegrationTest {
         }
 
         // Non-winner tail lines present in player2_output.txt
-        try (BufferedReader br = new BufferedReader(new FileReader(new File(tmp.toFile(), "player2_output.txt")))) {
+        try (BufferedReader br = new BufferedReader(new FileReader("player2_output.txt"))) {
             String all = br.lines().reduce("", (a, b) -> a + b + "\n");
             assertTrue(all.contains("player 1 has informed player 2 that player 1 has won"));
             assertTrue(all.contains("player 2 exits"));
