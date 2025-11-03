@@ -244,7 +244,7 @@ public class CardGame {
         String filename = "deck" + deck.getId() + "_output.txt";
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
             StringBuilder sb = new StringBuilder();
-            sb.append("deck ").append(deck.getId()).append(" contents:");
+            sb.append("deck").append(deck.getId()).append(" contents:");
             for (Card c : deck.getContents()) {
                 sb.append(" ").append(c.getDenomination());
             }
