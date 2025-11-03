@@ -10,14 +10,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Player thread:
- * - Holds a 4-card hand.
+ * - Holds a 4 ard hand.
  * - On each turn: atomically draw from left deck, discard to right deck.
- * - Prefers its own id as card value; discards non-preferred when possible.
- * - Announces a win when all 4 cards have the same value.
- * - Writes exact-format logs to playerX_output.txt.
+ * - Prefers its own id as card value, discards non preferred when possible
+ * - Announces a win when all 4 cards have the same value
+ * - Writes logs to playerX_output.txt
  *
- * NOTE: Atomicity across two decks is achieved in Player by locking the two
- * Deck locks in a consistent global order (lower-id deck first), to avoid deadlock.
  */
 public class Player implements Runnable {
 

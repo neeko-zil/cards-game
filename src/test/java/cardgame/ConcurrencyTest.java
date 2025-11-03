@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
-// Tests for thread-safety
+// Tests for thread safety
 public class ConcurrencyTest {
 
     // multiple threads drawing from deck
